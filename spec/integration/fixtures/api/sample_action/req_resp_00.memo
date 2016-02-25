@@ -1,0 +1,5 @@
+# api - Call Stack Signature:
+#	get_job_state()@lib/hodor/api/oozie/session.rb:45
+#	job_by_id()@lib/hodor/api/oozie.rb:34
+#	block (3 levels) in <module:Oozie>()@spec/integration/api/oozie/action_spec.rb:51
+{"errorMessage":null,"status":"OK","stats":null,"data":null,"transition":"end","externalStatus":"SUCCEEDED","cred":"null","conf":"<sub-workflow xmlns=\"uri:oozie:workflow:0.5\">\r\n  <app-path>hdfs:\/\/sample_domain.com:8020\/pipeline\/example_workflows\/workers\/data_source\/business<\/app-path>\r\n  <propagate-configuration \/>\r\n  <configuration>\r\n    <property>\r\n      <name>TIME_SHIFT<\/name>\r\n      <value>05<\/value>\r\n    <\/property>\r\n  <\/configuration>\r\n<\/sub-workflow>","type":"sub-workflow","endTime":"Sun, 25 Oct 2015 08:02:21 GMT","externalId":"0025062-151002103648730-oozie-oozi-W","id":"0025060-151002103648730-oozie-oozi-W@run_worker","startTime":"Sun, 25 Oct 2015 08:00:11 GMT","externalChildIDs":null,"name":"run_worker","errorCode":null,"trackerUri":"local","retries":0,"toString":"Action name[run_worker] status[OK]","consoleUrl":"http:\/\/sample_domain.com:11000\/oozie?job=0025062-151002103648730-oozie-oozi-W"}

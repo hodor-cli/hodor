@@ -1,0 +1,40 @@
+Kinds of Oozie Jobs: Workers versus Drivers
+---------------------------------------------------------------------------------
+The are two distinct and toplevel concerns when dealing with oozie workflows:
+
+  1. Defining the data flows and how each transforms and produces data
+  2. Giving these independent data flows a context and schedule to run on
+
+A "worker" is an Oozie workflow that does the former. It isn't concerned about
+what context it runs within, how many times it has retried, whether SLA alerts
+are being reported on its results, when it runs etc. It does one straight-forward
+job: translate input data to output data.
+
+A "driver" is an Oozie workflow and coordinator pair, that runs one or more
+workers as sub-workflows, passing them the aforementioned context as parameters.
+Drivers concern themselves with everthing workers do not, like what order
+multiple workers should run in, reporting SLA violations when its child workers
+fail, deciding between an hourly or daily run schedule etc.
+
+Hodor expects your Hadoop project get repo to be structured as follows:
+
+   <git_repo>
+      - workers/
+         - w1/
+            workflow.xml
+            hive_scripts
+            etc
+         - w2
+            workflow.xml
+            hive_scripts
+            etc.
+      - drivers/
+         - d1/
+            workflow.xml
+         - d2/
+            workflow.xml
+
+
+The workers directory contains all workers, organized as you see fit. While the
+drivers directory contains all drivers, also organized according to preference.
+

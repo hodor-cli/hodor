@@ -1,0 +1,83 @@
+require "hodor/version"
+
+module Hodor
+
+  # Hodor Exception Classes
+  class NestedError < StandardError
+    attr_reader :cause
+
+    def initialize(cause, kvp = {})
+      @cause = cause
+      @kvp = kvp
+    end
+
+    alias :orig_to_s :to_s
+    def to_s
+      msg = @kvp[:msg] || orig_to_s
+      if @kvp.size > 1 || (@kvp.size == 1 && !@kvp.has_key?(:msg))
+        msg << " Exception Context:\n"
+        @kvp.each_pair { |k,v|
+          next if k == :msg
+          if k.nil?
+            msg << "   nil => "
+          elsif k.is_a?(Symbol)
+            msg << "   :#{k.to_s} => "
+          else
+            msg <<  "   #{k} => "
+          end
+          if v.nil?
+            msg << "nil"
+          elsif v.is_a?(Symbol)
+            msg << ":#{v.to_s}"
+          else
+            msg << v
+          end
+          msg << "\n"
+        }
+      end
+      msg << "Root cause: #{@cause}"
+      msg << "\nBacktrace:\n         "
+      msg << "#{@cause.backtrace[0..5].join("\n         ")}"
+    end
+  end
+
+  class AbnormalExitStatus  < StandardError
+    attr_reader :exit_status
+    def initialize(exit_status, error_lines)
+      @exit_status = exit_status
+      super error_lines
+    end
+  end
+
+end
+
+class Hash
+  def symbolize_keys
+    inject({}) { |memo,(k,v)| 
+      memo[k] = v.is_a?(Hash) ? v.symbolize_keys : v;
+      memo[k.to_sym] = v.is_a?(Hash) ? v.symbolize_keys : v;
+      memo
+    }
+  end
+
+  def match strings
+    select { |key,val|
+      is_match = false
+      strings.each { |findstr|
+        is_match ||= key.downcase.include?(findstr) || val.downcase.include?(findstr)
+      }
+      is_match
+    }
+  end
+end
+
+class String
+  def unindent(count)
+    #gsub(/^#{scan(/^\s*/).min_by{|l|l.length}}/, "")
+    gsub(/^[ \t]{1,#{count}}/, "")
+  end
+end
+
+require "hodor/environment"
+
+

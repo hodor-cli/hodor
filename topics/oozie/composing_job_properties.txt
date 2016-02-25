@@ -1,0 +1,68 @@
+Job.property Files
+-----------------------------------------------------------------------------------------------
+Before you can run a job, you must first specify the properties it should receive. This is
+done via a job.properties file. Hodor's Oozie namespace enables you to assemble a hierarchy
+of job.property.erb files into a single job.property file suitable for execution of an
+Oozie job. The following directory structure shows several Job.properties.erb files at
+different locations within the hierarchy:
+
+  <git_repo>
+     job.properties.erb
+     <drivers/>
+        job.properties.erb
+          <billing>
+            job.properties.erb
+          <campaigns>
+            job.properties.erb
+          <diagnostic>
+            job.properties.erb
+
+For example, running a workflow contained in the <campaigns> directory, will pull in three
+job.properties.erb files. First, the one locate at the root, followed by the one located in
+<drivers>, followed by the the one located in <compaigns>. Each successive job.properties.erb
+file overrides the properties of its parents located higher in the directory structure.
+
+A typical job.properties file might look like the following:
+
+    nameNode=<%= env[:nameNode] %>
+    jobTracker=<%= env[:jobTracker] %>
+    oozie_url=<%= env[:oozie_url] %>
+
+Each line in the above job.property file sample represents the coming together of two
+distinct property systems, Java's "Velocity" property system and Ruby's "ERB" property
+system:
+
+    <Hadoop Property> = <Ruby ERB expansion>
+
+The key on the left (i.e. nameNode) is a Hadoop Java property that is referenced and expanded
+by workflows and coordinators at runtime on the Hadoop cluster. The value on the right
+(i.e. env[:nameNode])is a Ruby ERB expansion, taken from the clusters.yml file that is
+replace _on you local machine_ prior to deploying the workflows and coordinators to HDFS. 
+In other words, Java variables are expand post-deployment. ERB variables are expanded
+pre-deployment. ERB expansions within a job.properties file provide a means of passing a
+value from ERB to Velocity. The "<%= env[:nameNode] %>" part of the above
+job.properties.erb sample is replaced by the ":nameNode" key value (from clusters.yml)
+for the currently targetted Hadoop cluster. This variable substitution happens when you
+run the "oozie:run_job" command, so the target cluster's configuration is referenced
+at that moment.
+
+This approach of parameterization the urls and resource bindings that reach a target
+Hadoop cluster allows one a single job.properties file to work for all Hadoop clusters
+(i.e. production, staging, ad-hoc) in your infrastructure. To get a listing of what ERB
+variables are available for expansion within the hadoop environment currently being
+targeted:
+
+    $ hodor master:config
+    INFO|nameNode :  hdfs://sandbox.hortonworks.com:8020
+    INFO|jobTracker :  sandbox.hortonworks.com:8050
+    INFO|oozie_url :  http://127.0.0.1:11000/oozie
+    INFO|ssh_user :  root
+    INFO|ssh_host :  127.0.0.1
+    INFO|ssh_port :  2222
+
+Finally, the motivation for breaking a single job.properties file up into muliple segments
+arranged hierarchically is adherance to the "Do not repeat yourself" (DRY) principle.
+By breaking the job.properties.erb file into a hierarchy, we avoid lots of duplication
+that would exist in a flat file system. For example, properties that are shared by all
+jobs are pushed to higher job.properties.erb files. Properties that are specific to a
+particular job, are pushed to lower ones.

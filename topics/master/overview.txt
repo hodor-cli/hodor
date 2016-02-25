@@ -1,0 +1,17 @@
+
+Hodor's Master namespace functions as a local proxy for the master (e.g. "Name node") of your target
+Hadoop cluster.  The commands in this namespace either operate directly on the master node or
+provide information about the cluster the master is master of. For example, to run a Linux command
+on the master node:
+\xt    $ hodor master:exec ps -ef | grep java
+
+Part of the value of this namespace, it is allows you to operate on the master node, whatever that
+may be. For example, regardless of whether you are targetting a staging or production hadoop cluster
+(as configured in your "clusters.yml" file), the 'master:exec' command will route appropriately.
+
+HELP TOPICS:
+------------
+ * The clusters.yml file - to view help about the clusters.yml, type:
+    $ hodor master:topic clusters.yml
+
+\x5

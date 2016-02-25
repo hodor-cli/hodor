@@ -1,0 +1,43 @@
+Hodor's Oozie namespace provides a scriptable and easy-to-use interface to the Oozie server running
+on the target Hadoop cluster, and the workflows and coordinator jobs it is executing. Using the
+commands in this namespace, you can run oozie jobs, inspect their progress, diagnose failures,
+and kill oozie jobs, without shelling into remote machines. While many of these capabilities are
+afforded by graphical interfaces in the Hadoop ecosystem (i.e. Hue), Hodor's Oozie interface has
+several major advantages. First, Hodor's Oozie interface is more compatible with Git and modern
+software development practices, allowing you to commit your Oozie workflows to GitHub and utilize
+its teamwork features, such as branch commenting, peer reviews, pull requests etc. In addition,
+Hodor's dynamic cluster targetting and variable expansion system (via clusters.yml and jobs.yml
+files), enable you to build Oozie workflows and coordinators that can be easily and transparently
+retargetted to multiple Hadoop clusters.
+
+The Oozie namespace implements several core concepts, such as the notion of "current job",
+which is the foundation on which the "oozie:change_job" and "oozie:display_job" commands
+operate. Other concepts central to the Oozie namespace include "worker and driver workflows",
+"scenarios", the "jobs.yml" file etc. Understanding these concepts will go a long way
+toward understanding the behavior of the commands within the Oozie namespace. There are two
+ways to get more information about these core Oozie "topics". First, you can run the
+"oozie:topic <title>" command to display the help page for a particular topic. The "HELP
+TOPICS" section (shown next) provides more details about what topics are available and how to
+view them. You can also run the "oozie:topics" command to see a list of available topics.
+
+The other way to get assistance with Oozie topics is to study Hodor's rspec test suite. The
+test_repo, located at spec/test_repo, is an example Hadoop git repo that adheres to and
+implements the various conventions and concepts discussed within the Oozie topics pages. So,
+the topics page will provide you with an explanation, and the test_repo an illustration.
+
+HELP TOPICS:
+------------
+ * Inspecting Jobs - to view help for how to inspect Oozie jobs, type:
+    $ hodor oozie:topic inspecting_jobs
+ * Composing Job Properties - to view help on the job.property hierarchy, type:
+    $ hodor oozie:topic composing_job_properties
+ * Workers and Drivers - to view help on worker versus driver workflows, type:
+    $ hodor oozie:topic workers_and_drivers
+ * Driver Scenarios - to view help on driver "scenarios", type:
+    $ hodor oozie:topic driver_scenarios
+ * Blocking Coordinators - to view help on blocking vs non-blocking coordinators, type:
+    $ hodor oozie:topic blocking_coordinators
+ * Deploying and Running jobs - for information about the jobs.yml file, type:
+    $ hodor oozie:topic jobs.yml
+
+\x5

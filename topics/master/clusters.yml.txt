@@ -1,0 +1,36 @@
+The Clusters.yml File
+---------------------------------------------------------------------------------------------------
+The "clusters.yml" file is a file Hodor reads at startup that allows you to define multiple hadoop
+clusters, and the url and resource bindings they require, so that your Hodor session can be easily
+switched between multiple available Hadoop clusters. Hodor''s namespaces and commands use the url
+and resource bindings from clusters.yml to select the destination for its various SSH and REST
+calls. The clusters.yml file is expected in your hadoop project git repo at the path:
+
+    "<repo_root>/config/clusters.yml"
+
+The clusters.yml file will typically look something like the following:
+
+    :production:
+      :nameNode: hdfs://hadoop-prod.mycompany.com:8020
+      :jobTracker: hadoop-prod.mycompany.com:8050
+      :oozie_url: http://hadoop-prod.mycompany.com:11000/oozie
+
+    :staging:
+      :nameNode: hdfs://hadoop-stage.mycompany.com:8020
+      :jobTracker: hadoop-stage.mycompany.com:8050
+      :oozie_url: http://hadoop-stage.mycompany.com:11000/oozie
+
+The section (staging or production) that Hodor uses (e.g. the "target cluster") is configured using:
+
+    $ export HADOOP_ENV=production
+
+To display a list of all key/value pairs that are defined for the current target cluster:
+
+    $ hodor master:config
+
+To view more information about how the clusters.yml keys and values can be used to
+parameterize your job properties, type:
+
+    $ hodor oozie:topic compose_job_properties
+
+

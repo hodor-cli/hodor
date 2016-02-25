@@ -1,0 +1,52 @@
+The display_job command allows you to explore and print information about the current
+job within the Oozie job hierarchy and (optionally) to move between jobs. Display_job
+is the most feature-rich command in the command set, allowing the user to display
+information about a running or completed bundle, coordinator, workflow, oozie action,
+or hadoop job. In addition, for each type of job, you can display different aspects
+of the job's state. For example, the job's definition, it's log file, its config
+settings, etc. Display_jobs info display also shows the children of the current job
+organized in a table. If the current job is a coordinator, the children will be all
+the materializations of that coordinator, for exaple. Some of the options apply to
+the info display about the current job (i.e. -v option) and some of the options
+apply to the table of children (ie. -l option). The following display_job commands
+illustrate the display of different job state aspects and their options:
+\x5    $ hodor oozie:display_job info                # displays overall info about the job
+    $ hodor oozie:display_job -v info             # displays all available information
+    $ hodor oozie:display_job info -m 'data_source'    # only show matching child rows
+    $ hodor oozie:display_job info -l 100         # show 100 children of current job
+    $ hodor oozie:display_job info -l 100 -o 100  # show second 100 children
+    $ hodor oozie:display_job info -k             # display only killed children
+    $ hodor oozie:display_job log                 # displays the job's log file
+    $ hodor oozie:display_job log -w fail.log     # writes log output to file
+    $ hodor oozie:display_job definition          # displays the job's definition
+    $ hodor oozie:display_job conf                # displays the job's property settings
+    $ hodor oozie:display_job conf -m 'rdbms'     # matching properties (keys or values)
+    $ hodor oozie:display_job rest                # displays current REST request url
+    $ hodor oozie:display_job json                # raw json output of REST call
+    $ hodor oozie:display_job json -w rest.json   # the -w option works for all aspects
+
+In addition to displaying information about the current job, display_job can also
+describe non-current jobs. Just pass in a job id, as follows:
+\x5    $ hodor oozie:display_job 3 json              # rest output for child #3
+    $ hodor oozie:display_job 0035642-151002103648730-oozie-oozi-W log
+                                                  # ^^ display log for job ID
+
+Display_job can function in 1 of 2 modes: query mode or change mode. In query mode,
+display_job just queries for and displays the jobs state, but does not change the
+current_job to it. In change mode, display_job still shows the job's state, but
+also changes the current_job, like change_job does. The default mode is change_mode,
+but this behavior can be altered in two ways. First, you can add the -q option to the
+command line:
+\x5    $ hodor oozie:display_job -q 3    # Just queries child 3, does not change to it
+
+Alternatively, you can change display_job's default behavior by modifying the Hodor
+preference ":display_job_query_mode" in ~/.hodor.yml as follows:
+\x5    FILE: ${HOME}/.hodor.yml ----
+    :display_job_query_mode: true
+
+Hodor reads ~/.hodor.yml on startup, and if the above flag is true, query mode becomes
+display_job's default behavior.
+
+Suggested Alias:
+\x5    $ alias dj='hodor oozie:display_job'
+

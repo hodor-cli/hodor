@@ -1,0 +1,10 @@
+Hodor's Hdfs namespace assembles a command set that operates on a remote HDFS volume. Instead
+of ssh'ing to the remote Hadoop master, and running 'hadoop fs <command>' directly on the
+remote host, you run commands from Hodor's Hdfs namespace locally. 
+
+HELP TOPICS:
+------------
+ * Local vs HDFS paths - to view help about HDFS corresponding paths, type:
+     $ hodor hdfs:topic corresponding_paths
+
+\x5

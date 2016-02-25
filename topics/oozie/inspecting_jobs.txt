@@ -1,0 +1,59 @@
+INSPECTING JOBS 
+-----------------------------------------------------------------------------------------------
+The most important concept that is shared by all commands within Hodor''s Oozie namespace is the
+notion of "current job". Oozie''s job system is hierarhical. Coorinators contain workflows.
+Workflows contain actions. Actions may contain Hive jobs, decision nodes, Hadoop jobs or other
+workflows. So, it is a hierarchy, that can be many levels deep. In that respect, Oozie jobs
+present much like a file system. Unix long ago implemented a great why to traverse and inspect
+such a hierachy: ''cd'' and ''ls''. And Hodor''s Oozie namespace support the same conceptual methods.
+For example, to change to an Oozie workflow:
+
+    $ hodor oozie:change_job 0035114-151002103648730-oozie-oozi-W # Change to job with this ID
+    $ hodor oozie:change_job 14                                   # Change to job at index 14
+
+This will change the "current job" to the job indicated by the argument, but displays nothing.
+To display the state of the current job:
+
+    $ hodor oozie:display_job
+    $ hodor oozie:display_job info              # Equivalent since "info" is default attribute
+    $ hodor oozie:display_job -k                # Display only "killed" children
+    $ hodor oozie:display_job info -m "11/14"   # Display children that match "11/14" string
+    $ hodor oozie:display_job -m "11/14"        # Display children that match "11/14" string
+
+The above command will display general information (i.e. "info") about the "current job", but
+the command supports a wider range of display attributes and options. For example, you can
+change the number of children displayed, view the config settings passed in from the
+job.properties file, the current job''s log file, or the json REST response:
+
+    $ hodor oozie:display_job conf -l 100       # display 100 children
+    $ hodor oozie:display_job conf -m time      # display job properties matching ''time''
+    $ hodor oozie:display_job log -w fail.log   # display job log, write to file ''fail.log''
+    $ hodor oozie:display_job json              # display json response
+
+And if you want to change to the parent of the current job:
+
+    $ hodor oozie:change_job ..
+
+Just as file systems have a ''pwd'', Hodor''s Oozie namespace supports ''pwj'' for Path of working
+job, that will display your current position in the Oozie hierarchy of jobs.
+
+    $ hodor oozie:pwj
+
+Use of ''oozie:change_job'' is optional, because ''oozie:display_job'' will also change the
+current job, by default:
+
+    $ hodor oozie:display_job 0035114-151002103648730-oozie-oozi-W
+    $ hodor oozie:display_job 0035114-151002103648730-oozie-oozi-W log   # display log for job
+    $ hodor oozie:display_job 14 -l 50 -o 50    # info for job 14, starting at offset 50
+
+Like the previous change_job command, the display_job command will also change to the specified
+job, and then display its state. If oozie:display_job does both changing and displaying
+the job, then why should "oozie:change_job" exist? Because display_job''s behavior is
+configurable, via the ~/.hodor.yml file. If you set:
+
+    :display_job_query_mode: true
+
+in ~/.hodor.yml, then display_job does not change_job, it only displays the state of whatever
+job is current. In which case, you will need to use "oozie:change_job" and "oozie:display_job"
+in concert. So, pick which ever methodology you prefer, or that makes sense for you particular
+job inspection scenario.

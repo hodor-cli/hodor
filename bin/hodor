@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require_relative '../lib/hodor/cli'
+
+$thor_runner = true
+$hodor_runner = true
+
+begin
+  Hodor::Cli::Runner.start(ARGV)
+rescue Hodor::Cli::CommandNotFound => ex
+  namespace = ARGV.shift
+  begin
+    Kernel.exec("hodor-#{namespace} #{ARGV.join(' ')}")
+  rescue => ex
+    puts "HODOR! '#{namespace}' is unknown.\nNOTE: If this is a Hodor plugin, then perhaps you need to install the gem 'hodor-#{namespace}'..."
+  end
+end

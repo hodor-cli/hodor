@@ -1,0 +1,46 @@
+Blocking Coordinators
+=====================
+Oozie's coordinators can block on 2 things: the clock and data availability.
+A coordinator that blocks on both the clock and data availability is called
+a "blocking coordinator" because it will not run until both the time and the
+input data it is waiting on arrive. The run.properties file allows you to
+choose either a blocking coordinator or a non-blocking coordinator to pair
+with your driver workflow. To specify a blocking coordinator, you will set
+the following property values:
+
+  oozie.coord.application.path=${PWD}/coordinator-1-input.xml
+
+This property value setting specifies that you want to use a blocking
+coordinator that has 1 data input that it waits on. There is also a
+similarly named 2-input coordinator if you require that. It is not sufficient
+to specify that your coordinator should block on 1 input, you must also
+specify which input that is. To do that, you'll use the "input_1" variable.
+For example:
+
+  input_1=${service_data}
+
+The "input_1" variable is expanded by the 1-input coordinator to specify
+which input dataset, the coordinator monitors for data availability flags.
+Input 1 is set to the variable ${service_data}, which is defined in the
+shared (higher level) job.properties.erb file as follows:
+
+  service_data=${shared}/ready/service_data
+
+By setting the input_1 and coordinator path variables above in the
+run.properties file, the rake task will launch the corresponding coordinator
+from the scenarios directory. The subdirectory with scenarios is chosen
+according to your scenario variable assignment:
+
+  scenario: hourly/incremental
+
+With this assignment, the 1-input blocking coordinator located in the
+hourly/incremental subdirectory of scenarios will be launch. It will monitor
+the service_data dataset, and when new data arrives, it will run the
+workflow indicated by your assignment to the "driver" variable:
+
+  driver=periodic/analyze_campaign
+
+The approach treats the frequency, data dependencies, run contexts and
+workflow selections as distinct concerns and allows you to mix
+and match them via run.properties settings as the situation warrants.
+

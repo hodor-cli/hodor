@@ -1,0 +1,31 @@
+HDFS Corresponding Paths
+--------------------------------------------------------------------------------------------
+There are two methods for running Hdfs commands using this namespace. First, you can run the
+"hdfs:fs" pass through command, as follows:
+
+    $ hodor hdfs:fs -ls /big_data/pipeline/drivers/testbench
+
+Because "fs" is a pass-through command, it passes all of its arguments and options through
+as-is to the "hadoop fs" command line tool on the remote host. The "fs" command does no
+argument processing locally, it simply passes them via ssh for handling by the remote tool.
+Alternatively, you could accomplish the same directory listing as the above command, using
+the 'hdfs:ls' command:
+
+    $ cd /big_data/pipeline/drivers/testbench
+    $ hodor hdfs:ls
+
+The "ls" command uses your current local path to calculate the "corresponding path" on the
+remote HDFS volume, and lists the contents of that directory. The "corresponding path"
+on the remote HDFS volume is automatically determined by the Hdfs namespace and used by
+each of its commands.
+
+This HDFS path inference from your local path is done by all commands in the Hdfs namespace,
+except for the "fs" pass-through. For example, to upload a file in your current local directory
+to the corresponding path on the remote HDFS volume:
+
+    $ cd /big_data/pipeline/drivers/
+    $ hodor hdfs:put ingestion.xml
+
+Note: corresponding path is determined by first calculating your local path relative to
+      the root of your git repo, know as the "repo relative path". Next, the repo relative
+      path is appended to the HDFS root that you configure in your 'clusters.yml' file.

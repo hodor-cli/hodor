@@ -1,0 +1,42 @@
+Driver Scenarios
+---------------------------------------------------------------------------
+Within the drivers directory, a subdirectory named "scenarios" is expected
+by Hodor. The term "scenario" has aspecial meaning. A scenario is
+the combination of the "fill_frequency" plus the "fill_type" that a workflow
+should execute for. For example, some workflows run hourly, some daily. And
+some workflows run over historic ranges of time (i.e. a "backfill"), and some
+workflow run for future ranges of time (i.e. "incremental").  So, a driver
+can run with a "scenario", which is the combination of the two:
+
+   fill frequency + fill type).
+
+This scenarios that are typically defined are:
+
+  * hourly/incremental
+  * hourly/backfill
+  * daily/incremental
+  * daily/backfill
+
+The scenarios directory, under drivers, defines Oozie coordinators and context
+code artifacts that implement the scheduling and variable assignment concerns necessary
+to implement the scenario.  A typical scenario is organized as follows
+
+
+  hourly/
+    incremental/
+       context.xml
+       coordinator.xml    # blocks on time online
+       coordinator-1.xml  # blocks on time + 1 data input
+
+For example, the above "hourly/incremental" driver run scenario defines a
+coordinator that has an hourly frequency, along with a context.xml workflow that
+defines the table partitioning scheme to partition down to hourly granularity
+("i.e. an hourly fill_frequency"). The "fill_type" part of the scenario indicates whether
+the workflow is running from current time forward, or for historic date ranges.
+If running over historic date ranges (i.e. backfill fill_type), certain optimizatons
+can be made that run many hours at once.
+
+Each driver cites the run scenario it expects to run within, via the "jobs.yml"
+file. For more information about the jobs.yml file, type:
+
+   hodor oozie:topic jobs.yml

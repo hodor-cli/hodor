@@ -1,0 +1,185 @@
+The "jobs.yml" File
+---------------------------------------------------------------------------
+Within each driver directory, Hodor expects to find a "jobs.yml" file.
+Essentially a project file, that provides metadata about all the jobs
+that you have grouped together under a single drivers subdirectory. The
+"jobs.yml" file enumerates the jobs in that directory, indicates
+what workers it depends upon, which run scenario each driver expects and
+finally specifies the job property overrides each driver requires. For
+example, a typical driver directory might look like the following:
+
+
+    drivers/
+       testbench/
+          jobs.yml
+          my_test_driver.xml
+          another_test_driver.xml
+
+The "jobs.xml" file in the above directory structure enable you to 
+co-locate, deploy and run both drivers (my_test_driver and another_test_driver),
+managed by Hodor's Oozie namespace. A typical jobs.yml file might look
+something like the following:
+
+    my_test_driver:
+      deploy: workers/my_test_workflow
+      properties: |
+        scenario=hourly/incremental
+        driver=testbench/my_test_driver
+        sla_events=start_miss
+        startTime=2015-10-30T13:26Z
+        endTime=2015-10-30T13:45Z
+
+    another_test_driver:
+      deploy: workers/ingestion_flow.xml
+      properties: |
+        scenario=hourly/incremental
+        driver=testbench/another_test_driver
+        sla_events=duration_miss
+        startTime=2015-10-30T13:26Z
+        endTime=2015-10-30T13:45Z
+
+In the above jobs.yml file, there are two sections, one for each job.
+Each section must have "deploy" and "properties" key/value pairs. The deploy
+key is used by the "oozie:deploy" command to determine which worker
+directories a particular driver requires on the remote HDFS volume. For
+example, to deploy the "my_test_driver", run:
+
+     $ cd drivers/testbench
+     $ hodor oozie:deploy my_test_driver
+
+The deploy command will load the jobs.yml deploy key for the job named
+"my_test_driver", and its value to determine what the deploy command should
+upload to HDFS.
+
+The "properties" key contains properties vales that will override the
+property values in the hierarhcy of job.properties.erb files. The 
+job.properties.erb files (one of them) is expected to include the follow
+variable substitution:
+
+    FILE: job.properties.erb -------------
+    # Embed current job and run properties here
+    <%= job[:properties] %>
+
+    PWD=${drivers}/scenarios/${scenario}
+    oozie.coord.application.path=${PWD}/coordinator.xml
+    completion_flags=${drivers}/${driver}/${scenario}
+
+The "<%= job[:properties %>" variable expansion inserts the properties
+section for the particular job you name in the run_job command:
+
+    $ cd drivers/testbench
+    $ hodor oozie:run_job my_test_driver
+
+The above command loads the jobs.yml file from the current directory,
+and uses your "my_test_driver" argument to determine which yml section
+to use. The properties key from that section is then used to dynamically
+compose a combined job.properties file, that replaces the
+"<%= job[:properties] %>" with the properties for "my_test_driver".
+
+So, both the run_job command and deploy_job command use different key/value
+pairs within the same section of the jobs.yml file as input to their
+processing.
+
+Supporting Workflows Applications
+---------------------------------
+The previous example forces use of a coordinator application via its
+definition:
+
+    oozie.coord.application.path=${PWD}/coordinator.xml
+
+But what if you want your job to be a workflow application instead of
+a coordinator. In that case, modify your job.properties.erb file as
+follows:
+
+    <% if job.has_key?(:postfix) %>
+      <%= job[:postfix] %>
+    <% else %>
+      PWD=${drivers}/scenarios/${scenario}
+      oozie.coord.application.path=${PWD}/coordinator.xml
+      completion_flags=${drivers}/${driver}/${scenario}
+    <% end %>
+
+This allows you to pass in a postfix if you want to use something other
+than the standard coordinator application definition. Note: the term
+'postfix' is not a special term. It can be any name as long as you define
+it in the jobs.yml file as follows:
+
+    adhoc:
+      depends:
+      properties: |
+        run_query=guest/show_tables.hql
+      postfix: |
+        PWD=${drivers}/hivebox
+        oozie.wf.application.path=${PWD}/query.xml
+
+
+Using "Launch Markers"
+----------------------
+Another option for specifying which jobs.yml section to use for
+deploying and running a job is to use launch markers. Instead of passing
+a job name as an argument to the "oozie:deploy_job" and "oozie:run_job"
+command, you can modify the jobs.yml file with launch markers:
+
+    ^my_test_driver:
+      deploy: workers/my_test_workflow
+      properties: |
+        scenario=hourly/incremental
+        driver=testbench/my_test_driver
+        sla_events=start_miss
+        startTime=2015-10-30T13:26Z
+        endTime=2015-10-30T13:45Z
+
+    another_test_driver:
+      deploy: workers/ingestion_flow.xml
+      properties: |
+        scenario=hourly/incremental
+        driver=testbench/another_test_driver
+        sla_events=duration_miss
+        startTime=2015-10-30T13:26Z
+        endTime=2015-10-30T13:45Z
+
+Note the '^' symbol in front of "my_test_driver". This indicates to
+"oozie:deploy_job" and "oozie:run_job" that this job section is
+active. So, instead of specifying the job name on the command line,
+a short-hand is possible:
+
+    $ cd drivers/testbench
+    $ hodor oozie:deploy_job    # deploys the marked job
+    $ hodor oozie:deploy_job -c # alternate that does a clean deploy
+    $ hodor oozie:run_job       # runs the marked job
+
+Silencing Git
+-------------
+One minor annoyance with the "jobs.yml" approach, is that the file will
+change in ways that shouldn't be commited to the Git master. For example,
+if you want to change the start and end time property values, so you can
+rerun a workflow for a different time period, you don't necessarily want
+to check that in. Moreover, if you use launch markers, you don't want those
+to being commited to master either. But anytime the jobs.yml file is
+edited for either of these purposes, Git is going to bug you about
+committing your changes.
+
+This is optional, but if you want Git to ignore launch marker and
+time edits within the jobs.yml file, this is possible using "Git
+Attributes". This is a little known but highly useful feature of Git
+covered here:
+
+      https://git-scm.com/book/en/v2/Customizing-Git-Git-Attributes
+
+To utilize Git attributes to silence Git's baggering about these "throw-away"
+edits, do the following:
+
+      $ cd drivers
+      $ cat << HERE >> .gitattributes
+      jobs.yml filter=clean_jobs_yml
+      HERE
+      $ cd <repo_root>  # root of your hadoop project's git repo
+      $ cat << HERE >> .git/config
+      [include]
+        path = ../.gitconfig
+      [HERE]
+      $ cat << HERE >> .gitconfig
+      [filter "clean_jobs_yml"]
+          clean = "perl -pe \"s/^\\^//g; s/ime=20\\d\\d-\\d\\d-\\d\\d.*$/ime=<dynamic>/g\""
+          smudge = cat
+      [HERE]
