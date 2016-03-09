@@ -103,13 +103,8 @@ module Hodor
 
       @target_cluster[:target] = target_env
 
-      @egress_targets = yml_load('config/egress.yml')
-      @egress_to = @egress_targets[@target_cluster[:egress_to].to_sym]
-
       @loaded = true
-
       yml_expand(@target_cluster, [@clusters])
-      yml_expand(@egress_to, [@egress_targets])
     end
 
     def prefs
@@ -205,12 +200,6 @@ module Hodor
       @target_cluster
     end
 
-    def egress_to
-      load_settings if !@loaded || !@target_cluster || !@egress_to
-      raise "No settings for target cluster '#{hadoop_env}' were loaded" if !@loaded || !@target_cluster
-      @egress_to
-    end
-
     def [](key)
       target_cluster[key]
     end
@@ -293,11 +282,6 @@ module Hodor
         flat_vals = ["#{parent_key} = #{val}"]
       end
       flat_vals
-    end
-
-    def render_egress_config
-      flat_vals = yml_flatten('', egress_to)
-      flat_vals.join("\n")
     end
 
     # Run an ssh command, performing any optional variable expansion
