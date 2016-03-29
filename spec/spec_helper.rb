@@ -16,6 +16,7 @@ require 'hodor'
 require 'wrong/adapters/rspec'
 require 'support/d_v_r'
 require 'support/hodor_api'
+require 'support/hodor_cli'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
