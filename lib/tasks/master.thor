@@ -36,6 +36,11 @@ module Hodor
         }
       end
 
+      desc "print", "print value of named variable"
+      def print(varname)
+        puts env.settings[varname.to_sym]
+      end
+
       desc "exec <arguments>", %q{
         Pass through command that executes its arguments on the remote master via ssh
       }.gsub(/^\s+/, "").strip
@@ -56,6 +61,8 @@ module Hodor
       def ssh_config
         puts env.ssh_addr
       end
+
+      default_task :print
     end
   end
 end
