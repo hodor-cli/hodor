@@ -51,8 +51,14 @@ end
 def use_settings(settings)
   Hodor::Environment.instance.reset
   allow(Hodor::Environment.instance).to receive(:yml_load).
-    once.with("config/clusters.yml") do |arg|
-    { rspec: settings }
+    at_least(:once).with(any_args) do |arg|
+      if arg =~ /config\/clusters.yml/
+        { rspec: settings }
+      elsif arg =~ /\.hodor\.yml/
+        { debug_mode: true }
+      else
+        {}
+      end
   end
 end
 
