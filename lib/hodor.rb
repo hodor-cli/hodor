@@ -73,8 +73,11 @@ end
 
 class String
   def unindent(count)
-    #gsub(/^#{scan(/^\s*/).min_by{|l|l.length}}/, "")
-    gsub(/^[ \t]{1,#{count}}/, "")
+    gsub(/^#{scan(/^\s*/).min_by{|l|l.length}}/, "")
+  end
+
+  def squish
+    gsub("\n", ' ').squeeze(' ')
   end
 end
 
