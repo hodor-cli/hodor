@@ -36,10 +36,27 @@ module Hodor
         }
       end
 
-      desc "print", "print value of named key/value pair from the clusters.yml file"
-      def print(varname)
-        ::Hodor.hodor 
-        puts env.settings[varname.to_sym]
+      desc "print", "print values of named key/value pairs from the clusters.yml file"
+      long_desc <<-LONGDESC
+       Prints the value of a list of keys for the environment currently target.
+       The list of keys can have 0 to any number of items, and each value will
+       be printed separately for each key. If print is called without any keys
+       the entire set of keys for the current environment will be displayed.
+
+       Example Usage:
+
+       $ hodor master:print
+       $ hodor master:print ssh_user
+       $ hodor master:print ssh_user target oozie_url
+      LONGDESC
+      def print(*vars)
+        if vars.empty?
+          ap env.settings
+        else
+          vars.each { |var|
+            puts env.settings[var.to_sym]
+          }
+        end
       end
 
       desc "exec <arguments>", %q{
