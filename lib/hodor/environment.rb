@@ -81,7 +81,7 @@ module Hodor
     end
 
     def hadoop_env
-      ENV['HADOOP_ENV'] || 'sandbox'
+      @bind_to || ENV['HADOOP_ENV'] || 'sandbox'
     end
 
     def initialize
@@ -115,7 +115,8 @@ module Hodor
       @prefs
     end
 
-    def reset
+    def reset(target_env = nil)
+      @bind_to = target_env.nil? ? nil : target_env.to_s
       @clusters = nil
       @target_cluster = nil
       @loaded = false
@@ -328,6 +329,7 @@ module Hodor
     #                  the native output of the command is printed.
     #                  I.e. the extra output of log4r is suppressed.
     # opts - options to the function, that include:
+    #   [:terse]    => only show normal output of command. No log4r extras.
     #   [:echo]     => true  - append stdout and stderr as it is generated
     #               => false - execute the command silently
     #   [:echo_cmd] => true  - log the command to be executed
@@ -358,7 +360,7 @@ module Hodor
       end
 
       command_line = kvp_expand(command_line) unless opts[:suppress_expansion]
-      native_output_only = command_line.include?('--terse')
+      native_output_only = command_line.include?('--terse') || opts[:terse]
       if native_output_only
         command_line.sub!(' --terse', '')
         opts[:echo] = true

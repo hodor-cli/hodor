@@ -72,34 +72,25 @@ namespace :spec do
   task :unit => :depends do
     RSpec::Core::RakeTask.new("spec:unit")  do |t|
       t.pattern = 'spec/unit/**/*_spec.rb'
-      t.fail_on_error = true
+      t.fail_on_error = false
       t.rspec_opts = %w(--color --require spec_helper --format progress)
     end
   end
 
-  desc "Run unit tests"
+  desc "Run integration tests"
   task :integration => :depends do
     RSpec::Core::RakeTask.new("spec:integration")  do |t|
       t.pattern = 'spec/integration/**/*_spec.rb'
-      t.fail_on_error = true
-      t.rspec_opts = %w(--color --require spec_helper --format progress)
-    end
-  end
-
-  desc "Run unit tests"
-  task :target => :depends do
-    RSpec::Core::RakeTask.new("spec:target")  do |t|
-      t.pattern = 'spec/integration/api/oozie/action_spec.rb'
-      t.fail_on_error = true
+      t.fail_on_error = false
       t.rspec_opts = %w(--color --require spec_helper --format progress)
     end
   end
 
   desc "Run all specs"
-  task :all => [:integration, :unit]
-
-  task :default => :all
+  task :all => ['spec:unit', 'spec:integration']
 end
 
-desc "Run rspec on all sections"
-task :run_specs => ['spec:all']
+desc "Run spec on all test folders"
+task :spec => 'spec:all'
+task :specs => 'spec:all'
+task :run_specs => 'spec:all'
