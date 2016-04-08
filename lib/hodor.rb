@@ -49,6 +49,30 @@ module Hodor
     end
   end
 
+  class << self
+    def using(target = nil)
+      Environment.instance.reset(target)
+      Environment.instance.settings
+    end
+
+    def [](key)
+      Environment.instance.settings[key]
+    end
+
+    def target
+      Environment.instance.hadoop_env
+    end
+
+    def run(cmdline)
+      require_relative 'hodor/cli'
+      $thor_runner = true
+      $hodor_runner = true
+      Hodor::Cli::Runner.start(cmdline.squish.split)
+    rescue Hodor::Cli::CommandNotFound => ex
+      puts "Error! Command not found."
+    end
+  end
+
 end
 
 class Hash
