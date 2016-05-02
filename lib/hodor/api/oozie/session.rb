@@ -18,6 +18,10 @@ module Hodor::Oozie
       env.logger
     end
 
+    def hadoop_env
+      env.hadoop_env
+    end
+
     def initialize
       @len = env.prefs[:default_list_length] || 30
       @offset = 0

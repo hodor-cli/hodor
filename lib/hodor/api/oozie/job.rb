@@ -67,7 +67,7 @@ module Hodor::Oozie
     end
 
     def title
-      "#{self.class.name.split('::').last} Properties"
+      "#{session.hadoop_env.capitalize}: #{self.class.name.split('::').last} Properties"
     end
 
     def display_properties
@@ -93,6 +93,7 @@ module Hodor::Oozie
           end
           result << [prop, sanitize(val)]
         }
+        rows << [ "target", "#{session.hadoop_env.capitalize} @ #{display_as_time(Time.now.utc)} Z" ]
         { rows: rows }
       else
         nil
