@@ -71,7 +71,9 @@ module Hodor::Oozie
       else
         val = "List of Matching Jobs"
       end
-      "#{session.hadoop_env.capitalize}: #{val}"
+      utc_time = display_as_time(Time.now.utc)
+      local_time = Time.now.strftime("%H:%M %Z")
+      ["#{session.hadoop_env.capitalize}: #{val}", "System Time: #{utc_time} / #{local_time}"]
     end
 
     def expand

@@ -11,7 +11,13 @@ module Hodor
       @matching = matching
       # Display properties first
       properties = object.display_properties
-      @title = object.respond_to?(:title) ? object.title : "#{object.class.name} Properties"
+      title = object.respond_to?(:title) ? object.title : "#{object.class.name} Properties"
+      if title.is_a? Array
+        @title = title[0]
+        @sub_title = title[1]
+      else
+        @title = title
+      end
       if properties
         rows = properties[:rows]
         if rows.length < 5
@@ -108,6 +114,7 @@ module Hodor
       elsif children_width > 0
         ruler = [((children_width - title_width) / 2).to_i - 5, 0].max
         output = "     #{' '*ruler} #{@title} #{' '*ruler}\n"
+        output[(prop_width - @sub_title.length+2..-1)] = @sub_title + "\n" if @sub_title
       end
       output += properties + "\n" if @prop_table
       output += long_properties + "\n" if @long_table
