@@ -63,14 +63,17 @@ module Hodor::Oozie
 
     def title
       if @jobtype.start_with?('coord')
-        "List of Coordinators"
+        val = "List of Coordinators"
       elsif @jobtype.start_with?('w')
-        "List of Workflows"
+        val = "List of Workflows"
       elsif @jobtype.start_with?('b')
-        "List of Bundles"
+        val = "List of Bundles"
       else
-        "List of Matching Jobs"
+        val = "List of Matching Jobs"
       end
+      utc_time = display_as_time(Time.now.utc)
+      local_time = Time.now.strftime("%H:%M %Z")
+      ["#{session.hadoop_env.capitalize}: #{val}", "System Time: #{utc_time} / #{local_time}"]
     end
 
     def expand

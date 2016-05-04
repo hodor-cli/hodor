@@ -48,7 +48,7 @@ module Hodor::Oozie
     end
 
     def display_as_time(val)
-      display_date = val.strftime("%Y-%m-%d %H:%M")
+      display_date = val.strftime("%Y-%m-%d %H:%M %Z")
       cur_date = Time.now.strftime("%Y-")
       if display_date[0..4].eql?(cur_date)
         display_date[5..-1]
@@ -67,7 +67,7 @@ module Hodor::Oozie
     end
 
     def title
-      "#{self.class.name.split('::').last} Properties"
+      "#{session.hadoop_env.capitalize}: #{self.class.name.split('::').last} Properties"
     end
 
     def display_properties
@@ -93,6 +93,10 @@ module Hodor::Oozie
           end
           result << [prop, sanitize(val)]
         }
+
+        utc_time = display_as_time(Time.now.utc)
+        local_time = Time.now.strftime("%H:%M %Z")
+        rows << [ "Target", "#{session.hadoop_env.capitalize} @ #{utc_time} / #{local_time}" ]
         { rows: rows }
       else
         nil

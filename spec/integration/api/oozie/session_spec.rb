@@ -5,6 +5,7 @@ module Hodor::Oozie
 
       # Public methods
       it { should respond_to? :pwj }
+      it { should respond_to? :hadoop_env }
       it { should respond_to? :make_current }
       it { should respond_to? :current_id }
       it { should respond_to? :current_id }
