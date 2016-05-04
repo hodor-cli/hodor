@@ -114,7 +114,8 @@ module Hodor
       elsif children_width > 0
         ruler = [((children_width - title_width) / 2).to_i - 5, 0].max
         output = "     #{' '*ruler} #{@title} #{' '*ruler}\n"
-        output[(prop_width - @sub_title.length+2..-1)] = @sub_title + "\n" if @sub_title
+        start_idx = [children_width - @sub_title.length, output.length-ruler].max
+        output[start_idx..-1] = @sub_title + "\n" if @sub_title
       end
       output += properties + "\n" if @prop_table
       output += long_properties + "\n" if @long_table
