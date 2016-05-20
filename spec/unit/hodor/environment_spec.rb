@@ -58,22 +58,18 @@ module Hodor
     end
     context 'transforming yaml' do
       subject(:environment) { Hodor::Environment.instance }
-      let(:part_to_process) { "partc://${^part_one}:${^part_two}/${part_a}/${^part_two}/${^down_one}" }
-      let(:processed_yml) { 'partc://part_one:part_two/part_ay/part_two/d1' }
-      let(:yml_read) { {:tspec => "tttt",
-                        :rspec => { :item_one => { :part_one => "part_1",
-                                                 :part_two => "${^part_one}+2",
-                                                 :embedded => { :down_one => "d1" },
-                                                 :part_three=>{ :part_a => "part_ay",
-                                                                :part_b => "part_be",
-                                                                :test_process_part => part_to_process
-                                                 }}}} }
-
+      let(:part_to_process) { "${name}:${^name}:${^^name}:${^^^name}" }
+      let(:processed_yml) { 'gg1:g1:c1:p1' }
+      let(:yml_read) { {rspec: { rspec: { parent: { name: "p1",
+                                                    child: { name: "c1",
+                                                                grandchild: { name: "g1",
+                                                                                 ggrandchild: { name: "gg1" }}}},
+                                          family_tree: part_to_process }}}}
       let(:target_env) { environment.hadoop_env.to_sym }
       let(:target_yml) { [yml_read[target_env]] }
 
       it 'process yml variables' do
-        expect(environment.yml_expand(yml_read, target_yml)[:rspec][:item_one][:part_three][:test_process_part]).to eq processed_yml
+        expect(environment.yml_expand(yml_read, target_yml)[:rspec][:rspec][:family_tree]).to eq processed_yml
       end
     end
   end

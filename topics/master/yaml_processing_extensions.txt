@@ -1,0 +1,77 @@
+YAML Processing Extensions
+---------------------------------------------------------------------------------------------------
+
+Variable back-referencing:
+------------------------------
+
+In order to reduce repetition in .yml property files Hodor has implemented variable back referencing.
+Wrapping a string in ${} indicates it is a back reference to a variable. The ^ qualifier is used to specify which of the
+referenced versions of the property to return if the property is defined at more than one level of the yml definitions.
+
+In the YAML snippet below the property first is defined at four different levels:
+
+:first: o1
+:family:
+  :first: p1
+    :children:
+      :first: c1
+      :second: c2
+      :third: c3
+      :grandchildren:
+        :first: g1
+        :second: g2
+        :third: g3
+        :ggrandchildren:
+          :first: gg1
+          :second: gg2
+          :third: gg3
+          :fourth: gg4
+:first_ggrandparent: ${^^^^^first}
+:first_grandparent: ${^^^^first}
+:first_parent: ${^^^first}
+:first_child: ${^^first}
+:first_grandchild: ${^first}
+:first_ggrandchild: ${first}
+
+The variables using back references would resolve to the following:
+:first_ggrandparent => "first",
+:first_grandparent => "o1",
+:first_parent => "p1",
+:first_child => "c1",
+:first_grandchild => "g1",
+:first_ggrandchild => "gg1"
+
+This is because when a reference is found the application walks back uo to the root of the currently defined tree of properties then
+walks down to the bottom of the tree collecting values for any properties with a matching key.  The values are stored from the
+bottom up so "first" unqualified returns the lowest level property value, ^first returns the second lowest etc.  If there is no
+match for the property at the specified level or there is not property with a matching name then the key is returned.
+The first_ggrandparent is not defined so the key is returned.
+
+
+This functionality in combination with simple yml processing makes it possible to reduce repetition and assure consistency in
+.yml file definitions.  For example, a cluster file could be defined as follows
+
+    :standardSuffixes : &suffixes
+      :namePort: 8020
+      :oozieSuffix: 11000/oozie
+      :jobTrackerPort: 8050
+
+    :templates: &templates
+       :nameNode: hdfs://${^hadoopBaseUrl}/:${namePort)
+       :jobTracker: ${^hadoopBaseUrl}:${jobTrackerPort)
+       :oozie_url: http://${^hadoopBaseUrl}:${oozieSuffix)
+
+    :production:
+      <<suffixes
+      :hadoopBaseUrl: hadoop-prod.mycompany.com
+      <<: *templates
+
+    :staging:
+      <<suffixes
+      :hadoopBaseUrl: hadoop-stage.mycompany.com
+      <<: *templates
+
+To verify property definitions in the clusters.yml file use:
+    $ hodor master:print
+
+

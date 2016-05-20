@@ -20,6 +20,31 @@ The clusters.yml file will typically look something like the following:
       :jobTracker: hadoop-stage.mycompany.com:8050
       :oozie_url: http://hadoop-stage.mycompany.com:11000/oozie
 
+To reduce repetition, employ back referencing values previously defined in the file using the ${} operator with or without the ^ specifier.
+The earlier clusters.yml file example could be modified as follows to reduce repetition
+and to assure consistency of definitions.
+
+    :standardSuffixes : &suffixes
+      :namePort: 8020
+      :oozieSuffix: 11000/oozie
+      :jobTrackerPort: 8050
+
+    :templates: &templates
+      :nameNode: hdfs://${^hadoopBaseUrl}/:${namePort)
+      :jobTracker: ${^hadoopBaseUrl}:${jobTrackerPort)
+      :oozie_url: http://${^hadoopBaseUrl}:${oozieSuffix)
+
+    :production:
+      <<suffixes
+      :hadoopBaseUrl: hadoop-prod.mycompany.com
+      <<: *templates
+
+     :staging:
+       <<suffixes
+       :hadoopBaseUrl: hadoop-stage.mycompany.com
+       <<: *templates
+
+
 The section (staging or production) that Hodor uses (e.g. the "target cluster") is configured using:
 
     $ export HADOOP_ENV=production
