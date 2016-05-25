@@ -4,9 +4,48 @@ YAML Processing Extensions
 Variable back-referencing:
 ------------------------------
 
-In order to reduce repetition in .yml property files Hodor has implemented variable back referencing.
-Wrapping a string in ${} indicates it is a back reference to a variable. The ^ qualifier is used to specify which of the
-referenced versions of the property to return if the property is defined at more than one level of the yml definitions.
+In order to reduce repetition in YAML property files Hodor has implemented variable expansion and back
+referencing. How does this help? In normal YAML property file processing, there is no way to reuse values
+within the same YAML file. For example, in the below YAML fragment, we are forced to repeat the string
+"hadoop.vpc.acme.com" 4 times:
+
+  :nameNode: hdfs://name01.hadoop.vpc.acme.com:8020
+  :oozie_url: http://name01.hadoop.vpc.acme.com:11000/oozie/
+  :hive_jdbc: jdbc:hive2://name02.hadoop.vpc.acme.com:10000/
+  :hive_host: name02.hadoop.vpc.rgops.com
+
+By default, YAML offers no means of reusing a common string. However, with Hodor's variable expansion and
+back referencing feature, we can rewrite this YAML fragment with less repeatition:
+
+  :hadoopBaseUrl: name01.hadoop.vpc.acme.com
+  :nameNode: hdfs://name01.${hadoopBaseUrl}:8020
+  :oozie_url: http://name01.${hadoopBaseUrl}:11000/oozie/
+  :hive_jdbc: jdbc:hive2://name02.${hadoopBaseUrl}:10000/
+  :hive_host: name02.${hadoopBaseUrl}
+
+Wrapping a string in ${} indicates it is a back reference to a variable. It is a back reference because
+the variable must be defined before it can be subsequently expanded. Attempting to expand a variable that
+is defined later in the YAML file will fail to expand.
+
+Back references can expand values defined at the same level or within a parent, using the '^' qualifier.
+The '^' qualifier instructs Hodor to go up one level in the YAML hierarchy to find a value for the variable
+example. More than one '^' qualifier is allowed, traversing up one more parent for each '^'. An example
+that uses up reference ('^') follows:
+
+production:
+  :mysql_host: gamma-db-host.acme.com
+  :mysql_port: 3306
+  :database:
+    :name: production_data
+    :connection_string:  jdbc:mysql://${^msql_host}:${^mysql_port}/${name}
+
+Note that the connection string has three variable expansions, two that include '^' qualifiers. Both
+mysql_host and mysql_port are defined by the parent of connection_string, so the '^' qualifier causes
+Hodor to look to the parent for values. On the other hand, the ${name} variable is defined at the
+same hierarchical level, and therefore no '^' is required to locate its value.
+
+More precisely, the ^ qualifier is used to specify which of the referenced versions of the property to
+return if the property is defined at more than one level of the yml definitions.
 
 In the YAML snippet below the property first is defined at four different levels:
 
