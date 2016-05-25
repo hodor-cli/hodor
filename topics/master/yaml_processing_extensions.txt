@@ -47,44 +47,37 @@ same hierarchical level, and therefore no '^' is required to locate its value.
 More precisely, the ^ qualifier is used to specify which of the referenced versions of the property to
 return if the property is defined at more than one level of the yml definitions.
 
-In the YAML snippet below the property first is defined at four different levels:
+The YAML snippet below provides a more complex example the property name is defined at five different levels:
 
-:first: o1
+:name: o1
 :family:
-  :first: p1
+  :name: p1
     :children:
-      :first: c1
-      :second: c2
-      :third: c3
+      :name: c1
       :grandchildren:
-        :first: g1
-        :second: g2
-        :third: g3
+        :name: g1
         :ggrandchildren:
-          :first: gg1
-          :second: gg2
-          :third: gg3
-          :fourth: gg4
-:first_ggrandparent: ${^^^^^first}
-:first_grandparent: ${^^^^first}
-:first_parent: ${^^^first}
-:first_child: ${^^first}
-:first_grandchild: ${^first}
-:first_ggrandchild: ${first}
+          :name: gg1
+:ggrandparent: ${^^^^^name}
+:grandparent: ${^^^^name}
+:parent: ${^^^name}
+:child: ${^^name}
+:grandchild: ${^name}
+:ggrandchild: ${name}
 
 The variables using back references would resolve to the following:
-:first_ggrandparent => "first",
-:first_grandparent => "o1",
-:first_parent => "p1",
-:first_child => "c1",
-:first_grandchild => "g1",
-:first_ggrandchild => "gg1"
+:ggrandparent => "name",
+:grandparent => "o1",
+:parent => "p1",
+:child => "c1",
+:grandchild => "g1",
+:ggrandchild => "gg1"
 
 This is because when a reference is found the application walks back uo to the root of the currently defined tree of properties then
 walks down to the bottom of the tree collecting values for any properties with a matching key.  The values are stored from the
-bottom up so "first" unqualified returns the lowest level property value, ^first returns the second lowest etc.  If there is no
+bottom up so "name" unqualified returns the lowest level property value, ^name returns the second lowest etc.  If there is no
 match for the property at the specified level or there is not property with a matching name then the key is returned.
-The first_ggrandparent is not defined so the key is returned.
+The ggrandparent is not defined so the key is returned.
 
 
 This functionality in combination with simple yml processing makes it possible to reduce repetition and assure consistency in
