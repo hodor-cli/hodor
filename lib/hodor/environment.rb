@@ -262,10 +262,10 @@ module Hodor
         }
       elsif val.is_a? Hash
         more_parents = parents << val
-        val.each_pair { |k, v|
+        val.each_pair do |k, v|
           exp_val = yml_expand(v, more_parents)
           val[k] = exp_val
-        }
+        end
       else
         val
       end
