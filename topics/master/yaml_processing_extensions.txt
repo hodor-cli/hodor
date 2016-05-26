@@ -44,8 +44,8 @@ mysql_host and mysql_port are defined by the parent of connection_string, so the
 Hodor to look to the parent for values. On the other hand, the ${name} variable is defined at the
 same hierarchical level, and therefore no '^' is required to locate its value.
 
-More precisely, the ^ qualifier is used to specify which of the referenced versions of the property to
-return if the property is defined at more than one level of the yml definitions.
+When a key is specified at multiple levels within a YAML hierarchy, the ^ qualifier can be used to skip
+values defined at lower levels, and return the value of a parent or grandparent instead. Also, note that
 
 The YAML snippet below provides a more complex example the property name is defined at five different levels:
 
@@ -58,26 +58,26 @@ The YAML snippet below provides a more complex example the property name is defi
         :name: g1
         :ggrandchildren:
           :name: gg1
-:ggrandparent: ${^^^^^name}
-:grandparent: ${^^^^name}
-:parent: ${^^^name}
-:child: ${^^name}
-:grandchild: ${^name}
-:ggrandchild: ${name}
+          :sibling: ${name}
+          :parent: ${^name}
+          :grandparent: ${^^name}
+          :ggrandparent: ${^^^name}
+          :gggrandparent: ${^^^^name}
+          :ggggreantparent: ${^^^^^name}
 
 The variables using back references would resolve to the following:
-:ggrandparent => "name",
-:grandparent => "o1",
-:parent => "p1",
-:child => "c1",
-:grandchild => "g1",
-:ggrandchild => "gg1"
 
-This is because when a reference is found the application walks back uo to the root of the currently defined tree of properties then
-walks down to the bottom of the tree collecting values for any properties with a matching key.  The values are stored from the
-bottom up so "name" unqualified returns the lowest level property value, ^name returns the second lowest etc.  If there is no
-match for the property at the specified level or there is not property with a matching name then the key is returned.
-The ggrandparent is not defined so the key is returned.
+   :sibling => "gg1"
+   :parent => "g1",
+   :grandparent => "c1",
+   :ggrandparent => "p1",
+   :gggrandparent => "o1",
+   :ggggrandparent => "name",
+
+Hodor returns the value for name at the level indicated. Zero '^' qualifiers means to return only a sibling value. One '^' qualifier
+means return only a parent value (or sibling of the parent). Two '^' qualifiers means to return only the grandparent value or value
+of grandparent's sibilings etc.  If there is no match for the property at the specified level or there is not property with a
+matching name then the key is returned.
 
 
 This functionality in combination with simple yml processing makes it possible to reduce repetition and assure consistency in
