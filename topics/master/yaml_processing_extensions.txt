@@ -1,0 +1,109 @@
+YAML Processing Extensions
+---------------------------------------------------------------------------------------------------
+
+Variable back-referencing:
+------------------------------
+
+In order to reduce repetition in YAML property files Hodor has implemented variable expansion and back
+referencing. How does this help? In normal YAML property file processing, there is no way to reuse values
+within the same YAML file. For example, in the below YAML fragment, we are forced to repeat the string
+"hadoop.vpc.acme.com" 4 times:
+
+  :nameNode: hdfs://name01.hadoop.vpc.acme.com:8020
+  :oozie_url: http://name01.hadoop.vpc.acme.com:11000/oozie/
+  :hive_jdbc: jdbc:hive2://name02.hadoop.vpc.acme.com:10000/
+  :hive_host: name02.hadoop.vpc.rgops.com
+
+By default, YAML offers no means of reusing a common string. However, with Hodor's variable expansion and
+back referencing feature, we can rewrite this YAML fragment with less repeatition:
+
+  :hadoopBaseUrl: name01.hadoop.vpc.acme.com
+  :nameNode: hdfs://name01.${hadoopBaseUrl}:8020
+  :oozie_url: http://name01.${hadoopBaseUrl}:11000/oozie/
+  :hive_jdbc: jdbc:hive2://name02.${hadoopBaseUrl}:10000/
+  :hive_host: name02.${hadoopBaseUrl}
+
+Wrapping a string in ${} indicates it is a back reference to a variable. It is a back reference because
+the variable must be defined before it can be subsequently expanded. Attempting to expand a variable that
+is defined later in the YAML file will fail to expand.
+
+Back references can expand values defined at the same level or within a parent, using the '^' qualifier.
+The '^' qualifier instructs Hodor to go up one level in the YAML hierarchy to find a value for the variable
+example. More than one '^' qualifier is allowed, traversing up one more parent for each '^'. An example
+that uses up reference ('^') follows:
+
+production:
+  :mysql_host: gamma-db-host.acme.com
+  :mysql_port: 3306
+  :database:
+    :name: production_data
+    :connection_string:  jdbc:mysql://${^msql_host}:${^mysql_port}/${name}
+
+Note that the connection string has three variable expansions, two that include '^' qualifiers. Both
+mysql_host and mysql_port are defined by the parent of connection_string, so the '^' qualifier causes
+Hodor to look to the parent for values. On the other hand, the ${name} variable is defined at the
+same hierarchical level, and therefore no '^' is required to locate its value.
+
+When a key is specified at multiple levels within a YAML hierarchy, the ^ qualifier can be used to skip
+values defined at lower levels, and return the value of a parent or grandparent instead. Also, note that
+
+The YAML snippet below provides a more complex example the property name is defined at five different levels:
+
+:name: o1
+:family:
+  :name: p1
+    :children:
+      :name: c1
+      :grandchildren:
+        :name: g1
+        :ggrandchildren:
+          :name: gg1
+          :sibling: ${name}
+          :parent: ${^name}
+          :grandparent: ${^^name}
+          :ggrandparent: ${^^^name}
+          :gggrandparent: ${^^^^name}
+          :ggggreantparent: ${^^^^^name}
+
+The variables using back references would resolve to the following:
+
+   :sibling => "gg1"
+   :parent => "g1",
+   :grandparent => "c1",
+   :ggrandparent => "p1",
+   :gggrandparent => "o1",
+   :ggggrandparent => "name",
+
+Hodor returns the value for name at the level indicated. Zero '^' qualifiers means to return only a sibling value. One '^' qualifier
+means to return only a parent value (or more precisely a value of sibling to parent). Two '^' qualifiers means to return only the
+grandparent's value or value of grandparent's sibilings etc.  If there is no match for the property at the specified level or there
+is no property with a matching name then the key name is returned.
+
+
+This functionality in combination with simple yml processing makes it possible to reduce repetition and assure consistency in
+.yml file definitions.  For example, a cluster file could be defined as follows
+
+    :standardSuffixes : &suffixes
+      :namePort: 8020
+      :oozieSuffix: 11000/oozie
+      :jobTrackerPort: 8050
+
+    :templates: &templates
+       :nameNode: hdfs://${^hadoopBaseUrl}/:${namePort)
+       :jobTracker: ${^hadoopBaseUrl}:${jobTrackerPort)
+       :oozie_url: http://${^hadoopBaseUrl}:${oozieSuffix)
+
+    :production:
+      <<suffixes
+      :hadoopBaseUrl: hadoop-prod.mycompany.com
+      <<: *templates
+
+    :staging:
+      <<suffixes
+      :hadoopBaseUrl: hadoop-stage.mycompany.com
+      <<: *templates
+
+To verify property definitions in the clusters.yml file use:
+    $ hodor master:print
+
+
