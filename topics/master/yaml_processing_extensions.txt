@@ -75,9 +75,9 @@ The variables using back references would resolve to the following:
    :ggggrandparent => "name",
 
 Hodor returns the value for name at the level indicated. Zero '^' qualifiers means to return only a sibling value. One '^' qualifier
-means return only a parent value (or sibling of the parent). Two '^' qualifiers means to return only the grandparent value or value
-of grandparent's sibilings etc.  If there is no match for the property at the specified level or there is not property with a
-matching name then the key is returned.
+means to return only a parent value (or more precisely a value of sibling to parent). Two '^' qualifiers means to return only the
+grandparent's value or value of grandparent's sibilings etc.  If there is no match for the property at the specified level or there
+is no property with a matching name then the key name is returned.
 
 
 This functionality in combination with simple yml processing makes it possible to reduce repetition and assure consistency in
