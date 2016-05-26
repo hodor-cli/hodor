@@ -15,6 +15,7 @@ module Hodor
       # Public methods
       it { should include :erb_sub }
       it { should include :erb_load }
+      it { should include :no_op}
       it { should include :yml_load }
       it { should include :root }
     end
