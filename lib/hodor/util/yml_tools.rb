@@ -1,17 +1,17 @@
 require 'yaml'
 require_relative 'erb_tools'
 
-module Hodor
-
+module Hodor::Util
   module YmlTools
     include ErbTools
+
     def yml_load(filename) #, suppress_erb=false)
       YAML.load(erb_load(filename, false)) # suppress_erb))
     end
 
     def yml_expand(val, parents)
       if val.is_a? String
-        val.gsub(/\$\{.+?\}/) { |match|
+        val.gsub(/\$\{.+?\}/) do |match|
           cv = match.split(/\${|}/)
           expr = cv[1]
           ups = expr.split('^')
@@ -26,7 +26,7 @@ module Hodor
           else
             parent_key
           end
-        }
+        end
       elsif val.is_a? Hash
         more_parents = parents << val
         val.each_pair do |k, v|
@@ -50,14 +50,7 @@ module Hodor
       end
       flat_vals
     end
-
-    def render_flattened
-      flat_vals = yml_flatten('', egress_to)
-      flat_vals.join("\n")
-    end
-
   end
-
 end
 
 

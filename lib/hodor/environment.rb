@@ -13,7 +13,7 @@ include Log4r
 module Hodor
   class Environment
     include Singleton
-    include YmlTools
+    include Util::YmlTools
     attr_reader :logger
     attr_accessor :options
 
@@ -71,6 +71,7 @@ module Hodor
 
     def load_settings
       target_env = hadoop_env.to_sym
+
       @clusters = yml_load('config/clusters.yml')
 
       @target_cluster = @clusters[target_env]

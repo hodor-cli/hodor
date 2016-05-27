@@ -1,7 +1,6 @@
 require 'erb'
 
-module Hodor
-
+module Hodor::Util
   module ErbTools
     def erb_sub(erb_body)
       ERB.new(erb_body).result(self.instance_eval { binding })
