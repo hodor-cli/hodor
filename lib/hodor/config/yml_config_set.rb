@@ -1,8 +1,9 @@
 require_relative 'config_set'
 module Hodor::Config
   class YmlConfigSet < ConfigSet
-    def initialize(params)
-      puts "IN YML: #{params}"
+
+    def format_extension
+      'yml'
     end
   end
 end
