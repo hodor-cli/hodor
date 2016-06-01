@@ -23,9 +23,7 @@ module Hodor
     end
 
     def load
-
       @loaded = true
-
       yml_expand(@target_cluster, [@clusters])
     end
   end
