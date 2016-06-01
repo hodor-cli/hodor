@@ -1,8 +1,9 @@
 require_relative 'config_set'
 module Hodor::Config
   class EdnConfigSet < ConfigSet
-    def initialize(params)
-      puts "IN EDN: #{params}"
+
+    def format_extension
+      'edn'
     end
   end
 end
