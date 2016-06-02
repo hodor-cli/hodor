@@ -11,13 +11,13 @@ module Hodor::Config
       it { should include :file_path }
       it { should include :absolute_file_path }
       it { should include :exists? }
+      it { should include :load_text }
     end
 
     describe "Key instance methods" do
-      subject { LocalLoader.new(props, config_file_name, format_suffix)}
-      let(:good_properties) { { folder: 'config' } }
+      subject { LocalLoader.new(props, format_suffix)}
+      let(:good_properties) { { folder: 'config', config_file_name: 'clusters'} }
       let(:empty_properties) {  {}  }
-      let(:config_file_name) { 'clusters'}
       let(:format_suffix) { 'yml' }
       context "valid props"  do
         let(:props) { good_properties }
@@ -29,7 +29,7 @@ module Hodor::Config
           expect(subject.exists?).to be_truthy
         end
         it "loads file" do
-          results = subject.load
+          results = subject.load_text
           expect(results).to be_kind_of(String)
           expect(results.length).to be > 1
         end

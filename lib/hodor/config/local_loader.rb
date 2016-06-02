@@ -5,8 +5,8 @@ module Hodor::Config
   #include Hodor::Environment
   class LocalLoader < Loader
     attr_accessor  :folder
-    def initialize(props, config_file_name, format_suffix='yml')
-      super(props, config_file_name, format_suffix)
+    def initialize(props, format_suffix='yml')
+      super(props, format_suffix)
       @folder =  props[:folder]
     end
 
@@ -21,7 +21,7 @@ module Hodor::Config
     def exists?
       File.exists?(absolute_file_path)
     end
-    def load
+    def load_text
       if exists?
          File.read(absolute_file_path)
       else
