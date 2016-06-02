@@ -10,6 +10,5 @@ module Hodor::Config
       @format_type = format_type.to_s
       @config_file_name = config_file_name
     end
-
   end
 end

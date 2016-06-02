@@ -35,6 +35,9 @@ module Hodor::Config
       subject { ConfigSet.instance_methods }
       it { should include :loader }
       it { should include :properties }
+      it { should include :defaults }
+      it { should include :name }
+      it { should include :format_extension }
     end
 
     describe "Base class instance methods" do

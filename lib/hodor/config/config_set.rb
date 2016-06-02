@@ -36,7 +36,8 @@ module Hodor::Config
       if load_type.count == 1
         load_key = load_type.keys.first
         props=properties[load_key]
-        eval('Hodor::Config::' + "#{load_key.to_s.downcase}_loader".camelize + '.new(props, config_file_name, format_extension)')
+        eval_string = 'Hodor::Config::' + "#{load_key.to_s.downcase}_loader".camelize + '.new(props, config_file_name)'
+        eval(eval_string)
       else
         raise "Invalid file loader definition must be one of #{valid_loader_types.join(', ')}"
       end

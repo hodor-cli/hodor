@@ -8,6 +8,9 @@ module Hodor::Config
       subject { EdnConfigSet.instance_methods }
       it { should include :loader }
       it { should include :properties }
+      it { should include :defaults }
+      it { should include :name }
+      it { should include :format_extension }
     end
 
   end

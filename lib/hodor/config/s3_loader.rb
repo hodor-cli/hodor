@@ -3,10 +3,16 @@ require 'aws-sdk'
 
 module Hodor::Config
   class S3Loader < Loader
+    attr_accessor :bucket
+    def initialize(props, config_file_name, format_type='yml')
+      super(props, config_file_name, format_type)
+      @bucket =  props[:bucket]
+    end
+
     def load
-      bucket = Aws::S3::Bucket.new(properties[bucket])
-      object = bucket.object(bucket)
-      object.get(object_key).body.read
+      s3 = Aws::S3::Client.new(region: 'us-east-1')
+      object = s3.get_object(bucket: bucket, key: object_key)
+      object.body.read
     end
 
     def object_key
