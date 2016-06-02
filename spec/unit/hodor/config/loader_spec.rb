@@ -7,14 +7,14 @@ module Hodor::Config
       it { should include :properties }
       it { should include :config_file_name }
       it { should include :format_suffix }
-      it { should include :load }
+      it { should include :load_text }
     end
 
     describe "Key instance methods" do
-      subject { Loader.new(props, config_file_name, format_suffix)}
-      let(:good_properties) { {  } }
+      subject { Loader.new(props, format_suffix)}
+      let(:good_properties) { { config_file_name: 'test_configs' } }
       let(:empty_properties) {  {}  }
-      let(:config_file_name) { 'test_configs'}
+
       let(:format_suffix) { 'edn'}
       context "valid props"  do
         let(:props) { good_properties }
@@ -27,7 +27,6 @@ module Hodor::Config
 
       context "empty props"  do
         let(:props) { empty_properties }
-        let(:config_file_name) { nil }
         let(:error_message) { "Missing load configs. Input: properties={} and filename= ." }
         it "raises a not error" do
           expect {subject}.to raise_error(RuntimeError, error_message)

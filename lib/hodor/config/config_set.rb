@@ -3,7 +3,7 @@ require 'active_support/core_ext/hash'
 
 module Hodor::Config
   class ConfigSet
-    attr_accessor :properties, :defaults, :name
+    attr_accessor :properties, :defaults, :name, :loader
     def self.new_config_set(name, path_def, defaults={})
       format_type = path_def.keys.first
       props = path_def[format_type].deep_symbolize_keys
@@ -25,22 +25,22 @@ module Hodor::Config
       'invalid'
     end
 
-    def config_file_name
-      'rubyconfig'
-    end
-
     def loader
       valid_loader_types = [:s3, :local]
       return @loader unless @loader.nil?
       load_type = properties.slice(*valid_loader_types)
       if load_type.count == 1
         load_key = load_type.keys.first
-        props=properties[load_key]
-        eval_string = 'Hodor::Config::' + "#{load_key.to_s.downcase}_loader".camelize + '.new(props, config_file_name)'
-        eval(eval_string)
+        props = properties[load_key]
+        eval_string = 'Hodor::Config::' + "#{load_key.to_s.downcase}_loader".camelize + '.new(props, format_extension)'
+        @loader = eval(eval_string)
       else
         raise "Invalid file loader definition must be one of #{valid_loader_types.join(', ')}"
       end
+    end
+
+    def hash
+      raise "This is a base class for ConfigSet so it does not implement hash."
     end
 
     require_relative 'yml_config_set'
