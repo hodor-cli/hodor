@@ -176,7 +176,7 @@ module Hodor::Oozie
         job_content = env.erb_load(in_file) || ''
         job_props = options.inject('') { |accumulator, kvp|
           case kvp[0].to_sym
-          when :file_prefix, :file_name_prefix, :dry_run;
+          when :pushd, :path, :file_prefix, :file_name_prefix, :dry_run;
           else
             accumulator += "#{kvp[0]} = #{kvp[1]}\n"
           end
@@ -212,6 +212,11 @@ module Hodor::Oozie
       # If job references a job.properties or job.properties.erb file, that file will be
       # used directly to interpolate job property values.
       def run_job(job = nil, options = {})
+        pushd = options[:pushd] || options[:path]
+        if pushd
+          original_pwd = FileUtils.pwd
+          FileUtils.cd(pushd)
+        end
         jobfile = compose_job_file(select_job(job), options)
         unless options[:dry_run]
           job = env.job
@@ -226,6 +231,10 @@ module Hodor::Oozie
           env.ssh "oozie job -oozie :oozie_url -config #{runfile} -run", echo: true, echo_cmd: true
         end
         jobfile
+      rescue StandardError
+        raise
+      ensure
+        FileUtils.cd(original_pwd) if pushd
       end
     end
 end

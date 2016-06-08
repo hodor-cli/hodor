@@ -91,6 +91,8 @@ module Hodor
         desc: "Don't actually deploy the files, just show what would be deployed"
       method_option :clean, type: :boolean, aliases: "-c", default: false,
         desc: "Clean the hdfs target before deploying this directory"
+      method_option :pushd, type: :string, aliases: "-p", default: nil,
+        desc: "CD to path before starting put_dir, and restore original PWD before returning."
       method_option :verbose, type: :boolean, aliases: "-v", default: false,
         desc: "Log verbose details about which files are deployed and to where"
       method_option :maxdepth, type: :string, aliases: "-m", default: nil,

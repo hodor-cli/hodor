@@ -126,6 +126,45 @@ module Hodor
             }.not_to raise_error
           end
 
+          it 'should change to new path before run_job, and restore original path when done' do
+            expect(Hodor::Environment.instance).to receive(:yml_load).once
+              .with(/drivers\/testbench\/jobs\.yml/).and_call_original
+
+            allow(File).to receive(:read).at_least(:once)
+                .and_wrap_original do |original, *args|
+                  if (args[0] =~ /jobs.yml$/)
+                    %Q[
+                      ^valid_job:
+                        deploy: noop
+                        properties: |
+                          startTime=<dynamic>
+                          endTime=<dynamic>
+                    ]
+                  else
+                    original.call(*args)
+                  end
+            end
+
+            expect(env).to receive(:deploy_tmp_file).once { }
+            expect(env).to receive(:ssh).once { }
+
+            # File call to CD changes to child path
+            expect(FileUtils).to receive(:cd).once.and_wrap_original do |original, *args|
+              expect(args[0]).to match(/some\/new\/path/);
+            end
+
+            # Second call to CD restores original path
+            expect(FileUtils).to receive(:cd).once.and_wrap_original do |original, *args|
+              expect(args[0]).to match(/test_repo/);
+            end
+
+            expect {
+              oozie.run_job(nil, { 
+                pushd: 'some/new/path'
+              })
+            }.not_to raise_error
+          end
+
           it 'should deploy and run the Oozie job' do
             expect(Hodor::Environment.instance).to receive(:yml_load).once
               .with(/drivers\/testbench\/jobs\.yml/).and_call_original
