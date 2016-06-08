@@ -255,10 +255,12 @@ module Hodor
       ].unindent(8)
       method_option :dry_run, type: :boolean, aliases: "-d", default: false,
         desc: "Generate computed job.properties file without running or deploying associated job."
-      method_option :file_name_prefix, type: :string, aliases: '-p', default: '',
+      method_option :file_name_prefix, type: :string, aliases: '-n', default: '',
                     desc: 'Add a prefix to job properties filename. This is primarily for use with :dry_run'
+      method_option :pushd, type: :string, aliases: "-p", default: nil,
+        desc: "CD to path before starting run_job, and restore original PWD before returning."
       def run_job(*args)
-        outfile = oozie.run_job(args.length > 0 ? args[0] : nil, options[:dry_run], options[:file_name_prefix])
+        outfile = oozie.run_job(args.length > 0 ? args[0] : nil, options)
         logger.info "Dry run: the properties file is available for inspection at #{outfile}"  if options[:dry_run]
       end
 

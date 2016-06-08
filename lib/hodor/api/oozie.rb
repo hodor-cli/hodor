@@ -136,7 +136,7 @@ module Hodor::Oozie
       # directories override properties in higher directories.)
       # If direct job properties file is provided, properties will
       # be interpolated using values in that file.
-      def compose_job_file(direct_job = nil, prefix = '')
+      def compose_job_file(direct_job = nil, options = {})
         if direct_job.nil?
           pwd = Dir.pwd
           paths = env.paths_from_root(pwd)
@@ -149,32 +149,44 @@ module Hodor::Oozie
             result
           }
           FileUtils.mkdir './.tmp' unless Dir.exists?('./.tmp')
-          composite_properties_file = File.expand_path(".tmp/runjob.properties.erb", pwd)
-          File.open(composite_properties_file, "w") do |f|
+          src_job_file = File.expand_path(".tmp/runjob.properties.erb", pwd)
+          File.open(src_job_file, "w") do |f|
             f.puts composite_jobfile
           end
-          out_file = composite_properties_file.sub(/\.erb$/,'')
-          dest_file = generate_and_write_job_file(out_file, composite_properties_file, prefix)
         else
           raise "Job file '#{direct_job}' not found" unless File.exists?(direct_job)
-          if direct_job.end_with?('.erb')
-            out_file = "/tmp/#{File.basename(direct_job.sub(/.erb$/,''))}"
-            dest_file = generate_and_write_job_file(out_file, direct_job, prefix)
-          else
-            direct_job
-            out_file = append_prefix_to_filename(direct_job, prefix)
-            unless prefix.blank?
-              FileUtils.cp(direct_job, out_file)
-              dest_file = out_file
-            end
-          end
+          src_job_file = File.expand_path(File.join(File.dirname(direct_job), '.tmp', File.basename(direct_job)), pwd)
+          FileUtils.mkdir File.dirname(src_job_file) unless Dir.exists?(File.dirname(src_job_file))
+          FileUtils.cp(direct_job, src_job_file)
         end
-        dest_file
+        job_file = src_job_file.sub(/\.erb$/,'')
+        generate_and_write_job_file(job_file, src_job_file, options)
       end
 
-      def generate_and_write_job_file(file_name, in_file, prefix = '')
+      def generate_and_write_job_file(file_name, in_file, options = {})
+        prefix = options[:file_prefix] || ''
         out_file = append_prefix_to_filename(file_name, prefix)
-        File.open(out_file, 'w') { |f| f.write(env.erb_load(in_file)) }
+        job_content = env.erb_load(in_file) || ''
+        if @for_date
+          if env.job[:hour_offset]
+            options[:startTime] = "#{@for_date}T#{@for_hour}:#{hour_offset}"
+
+          end
+        end
+        job_props = options.inject('') { |accumulator, kvp|
+          case kvp[0].to_sym
+          when :pushd, :path, :file_prefix, :file_name_prefix, :dry_run;
+          else
+            accumulator += "#{kvp[0]} = #{kvp[1]}\n"
+          end
+          accumulator
+        }
+        unless job_props.empty?
+          overrides = "\n# Property Overrides\n# ====================\n" + job_props
+          puts overrides
+          job_content += overrides
+        end
+        File.open(out_file, 'w') { |f| f.write(job_content) } unless in_file.eql?(out_file)
         out_file
       end
 
@@ -198,18 +210,37 @@ module Hodor::Oozie
 
       # If job references a job.properties or job.properties.erb file, that file will be
       # used directly to interpolate job property values.
-      def run_job(job = nil, dry_run = false, file_prefix = '')
+      def run_job(job = nil, options)
+        pushd = options[:pushd] || options[:path]
+        if pushd
+          original_pwd = FileUtils.pwd
+          FileUtils.cd(pushd)
+        end
+        if @from_date
+          puts "from date = #{@from_date}"
+          options[:startTime] = "#{@from_date}T00:00Z"
+        end
         if job && (job =~ /job.properties.erb$/ || job =~ /job.properties/)
-          jobfile = compose_job_file(job, file_prefix)
+          jobfile = compose_job_file(job, options)
         else
           select_job(job)
-          jobfile = compose_job_file(nil, file_prefix)
+          jobfile = compose_job_file(nil, options)
         end
-        unless dry_run
+        unless options[:dry_run]
           runfile = env.deploy_tmp_file(jobfile)
           env.ssh "oozie job -oozie :oozie_url -config #{runfile} -run", echo: true, echo_cmd: true
         end
         jobfile
+      rescue StandardError
+        raise
+      ensure
+        FileUtils.cd(original_pwd) if pushd
+      end
+
+      def for(from, to=nil, &block)
+        @from_date = from
+        block.yield(self)
+        @from_date = nil
       end
     end
 end

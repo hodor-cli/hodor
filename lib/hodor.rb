@@ -63,6 +63,10 @@ module Hodor
       Environment.instance.hadoop_env
     end
 
+    def erb_load(filename)
+      Environment.instance.erb_load(filename)
+    end
+
     def run(cmdline)
       require_relative 'hodor/cli'
       $thor_runner = true
@@ -106,5 +110,6 @@ class String
 end
 
 require "hodor/environment"
-
+require "hodor/api/oozie"
+require "hodor/api/hdfs"
 
