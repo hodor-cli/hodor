@@ -1,4 +1,4 @@
-require_relative 'source'
+#require_relative 'source'
 require 'edn'
 require 'active_support/core_ext/hash'
 

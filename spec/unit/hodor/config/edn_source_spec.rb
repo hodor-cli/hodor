@@ -11,7 +11,7 @@ module Hodor::Config
       it { should include :defaults }
       it { should include :name }
       it { should include :format_extension }
+      it { should include :config_hash }
     end
-
   end
 end

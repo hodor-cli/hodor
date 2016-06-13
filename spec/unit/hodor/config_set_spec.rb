@@ -1,8 +1,4 @@
 require 'hodor/config_set'
-require 'hodor/config/yml_source'
-require 'hodor/config/edn_source'
-require 'Hodor/config/source'
-
 
 module Hodor
 
@@ -29,7 +25,6 @@ module Hodor
 
     describe "Required Public Interface" do
 
-      # .instance instead of .new necessitated by singleton:
       subject(:config) { Hodor::ConfigSet.instance_methods }
 
       # Public fields
