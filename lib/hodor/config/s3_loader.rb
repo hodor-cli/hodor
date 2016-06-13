@@ -4,7 +4,7 @@ require 'aws-sdk'
 module Hodor::Config
   class S3Loader < Loader
     attr_accessor :bucket, :folder
-    def initialize(props, format_suffix='yml')
+    def initialize(props, format_suffix = 'yml')
       super(props, format_suffix)
       @bucket =  props[:bucket]
       @folder =  props[:folder]

@@ -17,6 +17,7 @@ module Hodor::Config
     describe "Key instance methods" do
       subject { LocalLoader.new(props, format_suffix)}
       let(:good_properties) { { folder: 'config', config_file_name: 'clusters'} }
+      let(:invalid_location) { { folder: 'config/.private', config_file_name: 'bad_name' } }
       let(:empty_properties) {  {}  }
       let(:format_suffix) { 'yml' }
       context "valid props"  do
@@ -37,12 +38,21 @@ module Hodor::Config
 
       context "no filename"  do
         let(:props) { empty_properties }
-        let(:config_file_name) { nil }
         let(:error_message) { "Missing load configs. Input: properties={} and filename= ." }
         it "raises a not error" do
           expect {subject}.to raise_error(RuntimeError, error_message)
         end
       end
+
+      context "file does not exist" do
+        let(:props) { invalid_location }
+        let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
+        it "raises an no file at error" do
+          expect {subject.load_text}.to raise_error(RuntimeError, /No file at/)
+        end
+      end
+
+
     end
   end
 end
