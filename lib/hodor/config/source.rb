@@ -2,20 +2,20 @@ require 'active_support/core_ext/string'
 require 'active_support/core_ext/hash'
 
 module Hodor::Config
-  class ConfigSet
+  class Source
     attr_accessor :properties, :defaults, :name, :loader
-    def self.new_config_set(name, path_def, defaults={})
+    def self.new_source(name, path_def)
       format_type = path_def.keys.first
       props = path_def[format_type].deep_symbolize_keys
       if [:yml, :edn].include? format_type.to_sym
-        eval_string = 'Hodor::Config::' + "#{format_type.to_s.downcase}_config_set".camelize + '.new(name, props, defaults)'
+        eval_string = 'Hodor::Config::' + "#{format_type.to_s.downcase}_source".camelize + '.new(name, props)'
         eval(eval_string)
       else
         raise NotImplementedError.new("#{format_type.to_s.titleize} is not a supported format")
       end
     end
 
-    def initialize(name, props, defaults)
+    def initialize(name, props)
       @properties = props
       @defaults = defaults
       @name = name
@@ -39,12 +39,8 @@ module Hodor::Config
       end
     end
 
-    def hash
-      raise "This is a base class for ConfigSet so it does not implement hash."
-    end
-
-    require_relative 'yml_config_set'
-    require_relative 'edn_config_set'
+    require_relative 'yml_source'
+    require_relative 'edn_source'
     require_relative 'local_loader'
     require_relative 's3_loader'
   end

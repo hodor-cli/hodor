@@ -7,7 +7,7 @@ require 'open4'
 require 'socket'
 require 'etc'
 require_relative 'util/yml_tools'
-#require_relative 'configuration'
+require_relative 'config_set'
 
 include Log4r
 

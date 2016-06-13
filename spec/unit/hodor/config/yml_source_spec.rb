@@ -1,11 +1,11 @@
-require  'hodor/config/yml_config_set'
+require 'hodor/config/yml_source'
 
 module Hodor::Config
 
-  describe YmlConfigSet do
+  describe YmlSource do
 
     describe "Required methods" do
-      subject { ConfigSet.instance_methods }
+      subject { Source.instance_methods }
       it { should include :loader }
       it { should include :properties }
       it { should include :defaults }

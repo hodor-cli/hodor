@@ -1,25 +1,25 @@
-require 'hodor/configuration'
-require 'hodor/config/yml_config_set'
-require 'hodor/config/edn_config_set'
-require 'Hodor/config/config_set'
-require 'active_support/core_ext/hash'
+require 'hodor/config_set'
+require 'hodor/config/yml_source'
+require 'hodor/config/edn_source'
+require 'Hodor/config/source'
+
 
 module Hodor
 
-  describe Configuration do
+  describe ConfigSet do
 
     describe "Required Class Methods" do
 
-      subject(:config) { Hodor::Configuration.methods  }
+      subject(:config) { Hodor::ConfigSet.methods  }
 
       # Public methods
       it { should include :config_definitions_sets }
     end
 
     context "Test reading config definition sets " do
-      subject { Configuration.config_definitions_sets }
+      subject { ConfigSet.config_definitions_sets }
       it "returns hash containing order collection of load sets for each configuration" do
-        results = subject.hash.deep_symbolize_keys
+        results = subject.config_hash
         expect(results.length).to eq 3
         expect(results.keys).to eq([:secrets, :clusters, :egress])
         expect(results[:clusters]).to be_kind_of(Array)
@@ -30,7 +30,7 @@ module Hodor
     describe "Required Public Interface" do
 
       # .instance instead of .new necessitated by singleton:
-      subject(:config) { Hodor::Configuration.instance_methods }
+      subject(:config) { Hodor::ConfigSet.instance_methods }
 
       # Public fields
       it { should include :logger }
@@ -47,7 +47,7 @@ module Hodor
 
     describe "Instance methods" do
 
-      subject(:config) { Hodor::Configuration.new(config_name) }
+      subject(:config) { Hodor::ConfigSet.new(config_name) }
 
       context 'secrets config' do
         let(:config_name) { 'secrets' }
@@ -59,8 +59,8 @@ module Hodor
 
         it "returns a set of configs of the correct class " do
           expect(config.config_sets.length).to eq 2
-          expect(config.config_sets.map(&:class).map(&:name)).to eq(['Hodor::Config::YmlConfigSet',
-                                                                     'Hodor::Config::EdnConfigSet'])
+          expect(config.config_sets.map(&:class).map(&:name)).to eq(['Hodor::Config::YmlSource',
+                                                                     'Hodor::Config::EdnSource'])
         end
 
         it "merges config sets to get a single hash" do
