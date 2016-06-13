@@ -1,11 +1,11 @@
-require  'hodor/config/edn_config_set'
+require 'hodor/config/edn_source'
 
 module Hodor::Config
 
-  describe EdnConfigSet do
+  describe EdnSource do
 
     describe "Required methods" do
-      subject { EdnConfigSet.instance_methods }
+      subject { EdnSource.instance_methods }
       it { should include :loader }
       it { should include :properties }
       it { should include :defaults }

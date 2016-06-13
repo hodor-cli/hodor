@@ -1,10 +1,10 @@
 require 'erb'
 require 'yaml'
-require_relative 'config/config_set'
+require_relative 'config/source'
 require 'active_support/core_ext/hash'
 
 module Hodor
-  class Configuration
+  class ConfigSet
     include YAML
 
     attr_accessor :config_name
@@ -14,7 +14,7 @@ module Hodor
                                   { folder: 'config',
                                     config_file_name: 'load_sets' }}}
     def self.config_definitions_sets
-      Hodor::Config::ConfigSet.new_config_set('load_sets', LOAD_SETS_FILE_SPEC)
+      Hodor::Config::Source.new_source('load_sets', LOAD_SETS_FILE_SPEC)
     end
 
     def env
@@ -30,7 +30,7 @@ module Hodor
     end
 
     def config_defs
-      @config_defs ||= self.class.config_definitions_sets.hash.deep_symbolize_keys[config_name.to_sym]
+      @config_defs ||= self.class.config_definitions_sets.config_hash[config_name.to_sym]
     end
 
     def logger
@@ -42,7 +42,7 @@ module Hodor
     end
 
     def config_hash
-      config_sets.each_with_object({}) { |in_configs, out_configs| out_configs.merge!(in_configs.hash)}
+      config_sets.each_with_object({}) { |in_configs, out_configs| out_configs.merge!(in_configs.config_hash)}
     end
 
     def process
@@ -53,7 +53,7 @@ module Hodor
       out_set = []
       config_defs.each do |conf_def|
         set_name = "#{conf_def.keys.first}:#{config_name}"
-        out_set << Hodor::Config::ConfigSet.new_config_set(set_name, conf_def)
+        out_set << Hodor::Config::Source.new_source(set_name, conf_def)
       end
       out_set
     end
