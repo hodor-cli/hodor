@@ -21,11 +21,12 @@ module Hodor::Config
     def exists?
       File.exists?(absolute_file_path)
     end
+
     def load_text
       if exists?
          File.read(absolute_file_path)
       else
-
+        raise "No file at: #{absolute_file_path}."
       end
     end
 

@@ -19,6 +19,7 @@ module Hodor
       it { should include :yml_flatten}
       it { should include :yml_load }
       it { should include :root }
+      it {should include :secrets}
     end
 
     describe 'Ensure usable test repo' do

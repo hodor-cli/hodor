@@ -1,4 +1,5 @@
 require  'hodor/config/config_set'
+require 'active_support/core_ext/hash'
 
 module Hodor::Config
 
@@ -33,12 +34,44 @@ module Hodor::Config
 
     describe "local loading with new config set construction" do
       subject {ConfigSet.new_config_set(name, path_def)}
-
-      context "edn format reading local file" do
+      let(:expected_hash) { { test: { all_props: { test_prop: { test_key: "test value"}}}} }
+      context "edn format reading local secrets file" do
         let(:name) { "TestConfiguration"}
         let(:path_def) { { edn: { local: { folder: 'config/.private', config_file_name: 'secrets' }}} }
+        it "returns hash containing secrets" do
+          results = subject.hash
+          expect(results).to be_kind_of(Hash)
+          expect(results.deep_symbolize_keys).to eq(expected_hash)
+        end
       end
 
+      context "yml format reading local secrets file" do
+        let(:name) { "TestConfiguration"}
+        let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'secrets' }}} }
+        it "returns hash containing secrets" do
+          results = subject.hash
+          expect(results).to be_kind_of(Hash)
+          expect(results.deep_symbolize_keys).to eq(expected_hash)
+        end
+      end
+
+      context "file does not exist" do
+        let(:name) { "TestConfiguration"}
+        let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
+        it "raises an no file at error" do
+          expect {subject.hash}.to raise_error(RuntimeError, /No file at/)
+        end
+      end
+
+      context "yml format reading local file" do
+        let(:name) { "TestConfiguration"}
+        let(:path_def) { { yml: { local: { folder: 'config', config_file_name: 'clusters' }}} }
+        it "returns hash containing secrets" do
+          results = subject.hash
+          expect(results).to be_kind_of(Hash)
+          expect(results.keys).to eq( [:rspec])
+        end
+      end
     end
 
 
