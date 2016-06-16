@@ -21,6 +21,10 @@ module Hodor
       @config_name = config_name
     end
 
+    def logger
+      env.logger
+    end
+
     def env
       Environment.instance
     end
@@ -37,6 +41,9 @@ module Hodor
       @config_defs ||= if self.class.config_definitions_sets.config_hash.include? config_name.to_sym
                          self.class.config_definitions_sets.config_hash[config_name.to_sym]
                        else
+                         env.logger.warn("There is no config definition set for #{config_name.to_s} " +
+                               "defined in config/load_sets.yml. Hodor will look for the file " +
+                               "in the default location: config/#{config_name.to_s}.yml")
                          [BASE_LOCAL_FILE_SPECIFICATION.
                              recursive_merge({ yml: { local: { config_file_name: config_name.to_s }}})]
                        end
@@ -48,7 +55,6 @@ module Hodor
 
     def config_hash
       config_sets.each_with_object({}) { |in_configs, out_configs| out_configs.recursive_merge!(in_configs.config_hash)}
-
     end
 
     def process
