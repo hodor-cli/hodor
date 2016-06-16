@@ -54,6 +54,12 @@ module Hodor
         )
       end
 
+      it 'loads secrets' do
+        expect_any_instance_of(Hodor::ConfigSet).to receive(:config_hash).once { { a: 'ok' } }
+        expect(env.secrets).to eq({ a: 'ok' })
+        expect(env.secrets).to eq({ a: 'ok' })
+      end
+
       it 'loads settings'  do
         tmp =  env.load_settings
         expect(tmp).to eq base_cluster_configs

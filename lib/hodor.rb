@@ -76,12 +76,48 @@ module Hodor
 end
 
 class Hash
-  def symbolize_keys
+  def normalize_keys
     inject({}) { |memo,(k,v)| 
-      memo[k] = v.is_a?(Hash) ? v.symbolize_keys : v;
-      memo[k.to_sym] = v.is_a?(Hash) ? v.symbolize_keys : v;
+      memo[k.to_s] = v.is_a?(Hash) ? v.normalize_keys : v;
+      memo[k.to_sym] = v.is_a?(Hash) ? v.normalize_keys : v;
       memo
     }
+  end
+
+  def recursive_merge(new_hash)
+    self.merge(new_hash) do |key, old, new|
+      if new.respond_to?(:blank) && new.blank?
+        old
+      elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
+        old.recursive_merge(new)
+      else
+        new
+      end
+    end
+  end
+
+  def recursive_merge!(new_hash)
+    self.merge!(new_hash) do |key, old, new|
+      if new.respond_to?(:blank) && new.blank?
+        old
+      elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
+        old.recursive_merge!(new)
+      else
+        new
+      end
+    end
+  end
+
+  def self.deep_merge(source_hash, new_hash)
+  source_hash.merge(new_hash) do |key, old, new|
+    if new.respond_to?(:blank) && new.blank?
+      old
+    elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
+      deep_merge(old, new)
+    else
+      new
+    end
+  end
   end
 
   def match strings

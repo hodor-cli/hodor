@@ -15,7 +15,7 @@ module Hodor
   class Environment
     include Singleton
     include Util::YmlTools
-    attr_reader :logger,  :secrets
+    attr_reader :logger
     attr_accessor :options
 
     def root
@@ -67,13 +67,16 @@ module Hodor
     end
 
     def initialize
-      @options = {} 
+      @options = {}
+    end
+
+    def secrets
+      @secrets ||= Hodor::ConfigSet.new('secrets').config_hash
     end
 
     def load_settings
       target_env = hadoop_env.to_sym
 
-      @secrets = load_secrets
       @clusters = yml_load('config/clusters.yml')
 
       @target_cluster = @clusters[target_env]
@@ -89,10 +92,6 @@ module Hodor
 
       @loaded = true
       yml_expand(@target_cluster, [@clusters])
-    end
-
-    def load_secrets
-      #Hodor::Configuration.config_definitions_sets.hash.include? 'secrets'
     end
 
     def prefs
