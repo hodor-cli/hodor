@@ -7,7 +7,6 @@ module Hodor::Config
       it { should include :properties }
       it { should include :config_file_name }
       it { should include :format_suffix }
-      it { should include :load_text }
     end
 
     describe "Key instance methods" do

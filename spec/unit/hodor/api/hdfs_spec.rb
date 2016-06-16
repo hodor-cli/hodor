@@ -37,7 +37,7 @@ module Hodor
         subject(:hdfs) { Hodor::Hdfs.instance }
 
         it "should successfully construct ssh commandline to put file to HDFS" do
-          expect(File).to receive(:exists?).twice { true }
+          expect(File).to receive(:exists?).with(/workflow.xml/).exactly(2).times { true }
           expect(env).to receive(:run_local).with(/cat workflow.xml.*=hdfs\s.*-put - \/company\/workers\/noop\/workflow.xml/, anything)
           hdfs.put_file("workflow.xml")
         end
@@ -49,15 +49,12 @@ module Hodor
         subject(:hdfs) { Hodor::Hdfs.instance }
 
         it "should successfully construct ssh commandline to put directory to HDFS" do
-          expect(File).to receive(:exists?).twice { true }
+          expect(File).to receive(:exists?).with(/workflow.xml/).exactly(2).times { true }
           expect(env).to receive(:run_local).with(/cat workflow.xml.*=hdfs\s.*-put - \/company\/workers\/noop\/workflow.xml/, anything)
           hdfs.put_file("workflow.xml")
         end
       end
-
-
     end
-
   end
 
 end

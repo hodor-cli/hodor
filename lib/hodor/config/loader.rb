@@ -1,6 +1,6 @@
-require 'active_support/core_ext/string'
-require 'active_support/core_ext/hash'
-require 'active_support/core_ext/hash/keys'
+#require 'active_support/core_ext/string'
+#require 'active_support/core_ext/hash'
+#require 'active_support/core_ext/hash/keys'
 
 module Hodor::Config
   class Loader
@@ -14,8 +14,5 @@ module Hodor::Config
       end
     end
 
-    def load_text
-      raise "This is a base class for loader so it does not implement load."
-    end
   end
 end

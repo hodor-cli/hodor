@@ -1,7 +1,6 @@
 require 'erb'
 require 'yaml'
 require_relative 'config/source'
-require 'active_support/core_ext/hash'
 
 module Hodor
   class ConfigSet
@@ -9,12 +8,17 @@ module Hodor
 
     attr_accessor :config_name
 
-    LOAD_SETS_FILE_SPEC =  { yml:
-                            { local:
-                                  { folder: 'config',
-                                    config_file_name: 'load_sets' }}}
+    BASE_LOCAL_FILE_SPECIFICATION = { yml: { local: { folder: 'config'}}}
+
+    LOAD_SETS_FILE_SPECIFICATION = BASE_LOCAL_FILE_SPECIFICATION.
+                                    recursive_merge({ yml: { local: { config_file_name: 'load_sets' }}})
+
     def self.config_definitions_sets
-      Hodor::Config::Source.new_source('load_sets', LOAD_SETS_FILE_SPEC)
+      Hodor::Config::Source.new_source('load_sets', LOAD_SETS_FILE_SPECIFICATION)
+    end
+
+    def initialize(config_name)
+      @config_name = config_name
     end
 
     def env
@@ -30,19 +34,21 @@ module Hodor
     end
 
     def config_defs
-      @config_defs ||= self.class.config_definitions_sets.config_hash[config_name.to_sym]
+      @config_defs ||= if self.class.config_definitions_sets.config_hash.include? config_name.to_sym
+                         self.class.config_definitions_sets.config_hash[config_name.to_sym]
+                       else
+                         [BASE_LOCAL_FILE_SPECIFICATION.
+                             recursive_merge({ yml: { local: { config_file_name: config_name.to_s }}})]
+                       end
     end
 
     def logger
       env.logger
     end
 
-    def initialize(config_name)
-      @config_name = config_name
-    end
-
     def config_hash
-      config_sets.each_with_object({}) { |in_configs, out_configs| out_configs.merge!(in_configs.config_hash)}
+      config_sets.each_with_object({}) { |in_configs, out_configs| out_configs.recursive_merge!(in_configs.config_hash)}
+
     end
 
     def process
@@ -57,6 +63,7 @@ module Hodor
       end
       out_set
     end
+
   end
 end
 

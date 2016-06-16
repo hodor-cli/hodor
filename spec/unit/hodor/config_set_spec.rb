@@ -23,6 +23,16 @@ module Hodor
       end
     end
 
+    describe 'class methods and constants' do
+      it 'should return correct constants' do
+        expect(Hodor::ConfigSet::LOAD_SETS_FILE_SPECIFICATION).to eq({ yml:
+                                                                           { local:
+                                                                                 { folder: "config",
+                                                                                   config_file_name: "load_sets" }}})
+      end
+    end
+
+
     describe "Required Public Interface" do
 
       subject(:config) { Hodor::ConfigSet.instance_methods }
@@ -72,6 +82,15 @@ module Hodor
         end
       end
 
+      context 'invalid_name config' do
+        let(:config_name) { 'invalid' }
+        it "returns config def for one yml file in the local config directory named invalid" do
+          expect(config.config_defs.length).to eq 1
+          expect(config.config_defs.map(&:keys).flatten).to eq([:yml])
+          expect((config.config_defs.first[:yml][:local][:folder])).to eq('config')
+          expect((config.config_defs.first[:yml][:local][:config_file_name])).to eq('invalid')
+        end
+      end
     end
 
   end
