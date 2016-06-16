@@ -85,10 +85,11 @@ module Hodor
       context 'invalid_name config' do
         let(:config_name) { 'invalid' }
         it "returns config def for one yml file in the local config directory named invalid" do
+          expect(config.logger).to receive(:warn)
           expect(config.config_defs.length).to eq 1
           expect(config.config_defs.map(&:keys).flatten).to eq([:yml])
-          expect((config.config_defs.first[:yml][:local][:folder])).to eq('config')
-          expect((config.config_defs.first[:yml][:local][:config_file_name])).to eq('invalid')
+          expect(config.config_defs.first[:yml][:local][:folder]).to eq('config')
+          expect(config.config_defs.first[:yml][:local][:config_file_name]).to eq('invalid')
         end
       end
     end
