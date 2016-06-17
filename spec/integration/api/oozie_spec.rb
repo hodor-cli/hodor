@@ -88,7 +88,7 @@ module Hodor
             use_pwd 'drivers/testbench', true
           end
 
-          it 'should build the expected runjob file' do
+          it 'should build the expected runjob file that correctly applies property overrides' do
             expect(Hodor::Environment.instance).to receive(:yml_load).once
               .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
@@ -115,13 +115,14 @@ module Hodor
               expect(contents).to match(/startTime=\<dynamic\>/)
               expect(contents).to match(/oozie\.coord\.application\.path=\$\{CWD\}/)
               expect(contents).to match(/queueName\=default/)
+              expect(contents).to match(/test_property\s+\=\s+test_value/)
             end
 
             expect(env).to receive(:deploy_tmp_file).once { }
             expect(env).to receive(:ssh).once { }
 
             expect {
-              oozie.run_job
+              oozie.run_job(nil, { test_property: "test_value" })
             }.not_to raise_error
           end
 
@@ -166,7 +167,7 @@ module Hodor
               expect(oozie).to receive(:compose_job_file).once.and_call_original
               expect(env).not_to receive(:run_local)
               expect {
-                oozie.run_job('valid_job', true)
+                oozie.run_job('valid_job', dry_run: true)
               }.not_to raise_error
             end
           end
@@ -186,9 +187,12 @@ module Hodor
                 end
               end
 
-              expect(oozie).to receive(:compose_job_file).once.with(nil, prefix).and_call_original
+              expect(oozie).to receive(:compose_job_file).once.with(
+                hash_including(name: 'valid_job'),
+                hash_including(dry_run: true, file_prefix: prefix))
+                .and_call_original
               expect(env).not_to receive(:run_local)
-              expect(oozie.run_job('valid_job', true, prefix)).to match(prefix)
+              expect(oozie.run_job('valid_job', dry_run: true, file_prefix: prefix)).to match(prefix)
             end
           end
         end
