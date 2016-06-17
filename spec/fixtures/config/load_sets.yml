@@ -1,0 +1,38 @@
+secrets:
+  - yml:
+     local:
+       folder: config/.private
+       config_file_name: secrets
+  - edn:
+     local:
+       folder: config
+       config_file_name: secrets
+clusters:
+  - yml:
+     local:
+       folder: tst_folder
+       config_file_name: clusters
+  - edn:
+     s3:
+       bucket: tst_bucket
+       folder: tst_folder
+       config_file_name: clusters
+  - edn:
+     local:
+       folder: tst_folder
+       config_file_name: clusters
+egress:
+  - yml:
+     local:
+       folder: tst_folder
+       config_file_name: clusters
+  - edn:
+     s3:
+       bucket: tst_bucket
+       folder: tst_folder
+       config_file_name: clusters
+  - edn:
+     local:
+       folder: tst_folder
+       config_file_name: clusters
+

@@ -1,3 +1,5 @@
+require 'log4r'
+require 'log4r/configurator'
 require 'hodor/config/source'
 require 'active_support/core_ext/hash'
 
@@ -39,6 +41,7 @@ module Hodor::Config
         let(:name) { "TestConfiguration"}
         let(:path_def) { { edn: { local: { folder: 'config/.private', config_file_name: 'secrets' }}} }
         it "returns hash containing secrets" do
+          secrets_reading_edn
           results = subject.config_hash
           expect(results).to be_kind_of(Hash)
           expect(results.deep_symbolize_keys).to eq(expected_hash)
@@ -48,7 +51,11 @@ module Hodor::Config
       context "yml format reading local secrets file" do
         let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'secrets' }}} }
+        before do
+
+        end
         it "returns hash containing secrets" do
+          secrets_reading_yml
           results = subject.config_hash
           expect(results).to be_kind_of(Hash)
           expect(results.deep_symbolize_keys).to eq(expected_hash)
@@ -58,8 +65,8 @@ module Hodor::Config
       context "file does not exist" do
         let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
-        it "raises an no file at error" do
-          expect {subject.config_hash}.to raise_error(RuntimeError, /No file at/)
+        it "returns an empty hash" do
+          expect(subject.config_hash).to eq({})
         end
       end
 
@@ -102,5 +109,28 @@ module Hodor::Config
         end
       end
     end
+
+    private
+
+    def secrets_reading_yml
+      good_secrets_private
+      expect(File).to receive(:exists?).with(/secrets.yml/).once { true }
+      expect(File).to receive(:read).with(/secrets.yml/).once { good_secrets_private }
+    end
+
+    def secrets_reading_edn
+      good_secrets_private_edn
+      expect(File).to receive(:exists?).with(/secrets.edn/).once { true }
+      expect(File).to receive(:read).with(/secrets.edn/).once { good_secrets_private_edn }
+    end
+
+    def good_secrets_private
+      @good_secrets_private ||= File.read('./spec/fixtures/config/.private/secrets.yml')
+    end
+
+    def good_secrets_private_edn
+      @good_secrets_private ||= File.read('./spec/fixtures/config/.private/secrets.edn')
+    end
+
   end
 end

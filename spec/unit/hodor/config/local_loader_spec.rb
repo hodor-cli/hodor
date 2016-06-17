@@ -47,12 +47,11 @@ module Hodor::Config
       context "file does not exist" do
         let(:props) { invalid_location }
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
-        it "raises an no file at error" do
-          expect {subject.load_text}.to raise_error(RuntimeError, /No file at/)
+        it "warns there is no file and returns nil" do
+          expect(subject.logger).to receive(:warn).with(/No file at/)
+          expect(subject.load_text).to be_nil
         end
       end
-
-
     end
   end
 end

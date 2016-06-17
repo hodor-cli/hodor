@@ -10,7 +10,8 @@ module Hodor::Config
     end
 
     def config_hash
-      YAML.load(self.loader.load_text).deep_symbolize_keys
+      return {} unless loader.load_text
+      YAML.load(loader.load_text).deep_symbolize_keys
     end
   end
 end
