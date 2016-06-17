@@ -15,6 +15,9 @@ module Hodor
     context "Test reading config definition sets " do
       subject { ConfigSet.config_definitions_sets }
       it "returns hash containing order collection of load sets for each configuration" do
+        good_definition_set
+        expect(File).to receive(:exists?).with(/load_sets.yml/).once { true }
+        expect(File).to receive(:read).with(/load_sets.yml/).once { good_definition_set }
         results = subject.config_hash
         expect(results.length).to eq 3
         expect(results.keys).to eq([:secrets, :clusters, :egress])
@@ -69,6 +72,15 @@ module Hodor
         end
 
         it "merges config sets to get a single hash" do
+          good_secrets_basic
+          good_definition_set
+          good_secrets_private
+          expect(File).to receive(:exists?).with(/load_sets.yml/).at_most(:once) { true }
+          expect(File).to receive(:read).with(/load_sets.yml/).at_most(:once) { good_definition_set }
+          expect(File).to receive(:exists?).with(/secrets.yml/).once { true }
+          expect(File).to receive(:read).with(/secrets.yml/).once { good_secrets_private }
+          expect(File).to receive(:exists?).with(/secrets.edn/).once { true }
+          expect(File).to receive(:read).with(/secrets.edn/).once { good_secrets_basic }
           expect(config.config_hash).to eq({ test: { all_props:{ test_prop: { test_key: "edn test value",
                                                                                  test_key1: "test value1"}}}})
         end
@@ -94,5 +106,18 @@ module Hodor
       end
     end
 
+    private
+
+    def good_secrets_basic
+      @good_secrets_basic ||= File.read('./spec/fixtures/config/secrets.edn')
+    end
+
+    def good_secrets_private
+      @good_secrets_private ||= File.read('./spec/fixtures/config/.private/secrets.yml')
+    end
+
+    def good_definition_set
+      @good_def_set ||= File.read('./spec/fixtures/config/load_sets.yml')
+    end
   end
 end

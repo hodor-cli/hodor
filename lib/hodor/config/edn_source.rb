@@ -10,8 +10,8 @@ module Hodor::Config
     end
 
     def config_hash
+      return {} unless loader.load_text
       EDN.read(loader.load_text).deep_symbolize_keys
-
     end
   end
 end

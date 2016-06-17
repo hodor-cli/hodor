@@ -19,7 +19,12 @@ module Hodor::Config
 
     def load_text
       object = s3.get_object(bucket: bucket, key: object_key)
-      object.body.read
+      if object.nil? || object.body.nil?
+        logger.warn("No file on S3 at: #{bucket}/#{object_key}")
+        nil
+      else
+        object.body.read
+      end
     end
 
     def object_key

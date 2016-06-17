@@ -1,0 +1,12 @@
+:rspec:
+  :default_shell_path:  /usr/bin
+  :nameNode: hdfs://master.rspectest.com:8020
+  :jobTracker: data02.rspectest.com:8050
+  :hdfs_root: /
+  :oozie_url:  http://master.rspectest.com:11000/oozie/
+  :connection_url: jdbc:rdbms://db.rspectest.com/hive?createDatabaseIfNotExist=true
+  :metastore_url: thrift://master.rspectest.com:9083
+  :s3auth: s3n://XXXXXXXXXXXXXXXXXXXX:YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+  :ssh_user: hadoop
+  :hdfs_user: hdfs
+  :ssh_host: master.rspectest.com

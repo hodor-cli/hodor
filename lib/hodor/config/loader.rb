@@ -1,6 +1,7 @@
 #require 'active_support/core_ext/string'
 #require 'active_support/core_ext/hash'
 #require 'active_support/core_ext/hash/keys'
+require_relative '../environment'
 
 module Hodor::Config
   class Loader
@@ -14,5 +15,12 @@ module Hodor::Config
       end
     end
 
+    def logger
+      env.logger
+    end
+
+    def env
+      Hodor::Environment.instance
+    end
   end
 end

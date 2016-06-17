@@ -10,6 +10,7 @@ module Hodor::Config
       @folder =  props[:folder]
     end
 
+
     def root
       Hodor::Environment.instance.root
     end
@@ -23,11 +24,13 @@ module Hodor::Config
     end
 
     def load_text
-      if exists?
-         File.read(absolute_file_path)
-      else
-        raise "No file at: #{absolute_file_path}."
-      end
+      @out_text ||= if exists?
+                      File.read(absolute_file_path)
+                    else
+                      logger.warn("No file at: #{absolute_file_path}.")
+                      nil
+                    end
+
     end
 
     def absolute_file_path
