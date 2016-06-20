@@ -106,5 +106,5 @@ class String
 end
 
 require "hodor/environment"
-
-
+require "hodor/api/oozie"
+require "hodor/api/hdfs"
