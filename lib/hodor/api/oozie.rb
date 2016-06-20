@@ -122,7 +122,7 @@ module Hodor::Oozie
               }
               fail "You must specify which job from jobs.yml to run" if !job
             end
-            jobs = jobs.symbolize_keys
+            jobs = jobs.normalize_keys
             if !jobs.has_key?(job.to_sym)
               caret = "^#{job.to_s}"
               fail "Job '#{job}' was not defined in jobs.yml" if !jobs.has_key?(caret.to_sym)
