@@ -14,7 +14,7 @@ module Hodor::Config
       it { should include :load_text }
     end
 
-    describe "Key instance methods" do
+    describe "Key initialization methods" do
       subject { S3Loader.new(props, format_suffix)}
       let(:good_properties) { { bucket: 'test_bucket', folder: 'test_folder', config_file_name: 'test_configs'} }
       let(:empty_properties) {  {}  }
@@ -33,6 +33,19 @@ module Hodor::Config
         it "raises a not error" do
           expect {subject}.to raise_error(RuntimeError, error_message)
         end
+      end
+
+      context "missing AWS config"  do
+        let(:props) { good_properties }
+        let(:error_message) { "AWS connection configuration missing from your environment: AWS_ACCESS_KEY_ID=AKIAIYXJFSOHTMEHUT7A AWS_SECRET_ACCESS_KEY= AWS_REGION=us-east-1" }
+
+        it "raises a not error" do
+         expect(ENV).to receive(:[]).with('AWS_ACCESS_KEY_ID').once.and_return(nil)
+         expect(ENV).to receive(:[]).at_least(:twice).and_call_original
+          #allow(ENV).to receive(:[]).with('AWS_SECRET_ACCESS_KEY').and_return(nil)
+          expect {subject}.to raise_error(RuntimeError, error_message)
+        end
+
       end
     end
   end
