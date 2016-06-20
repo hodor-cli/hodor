@@ -8,6 +8,12 @@ module Hodor::Config
       super(props, format_suffix)
       @bucket =  props[:bucket]
       @folder =  props[:folder]
+      unless ENV['AWS_SECRET_ACCESS_KEY'] && ENV['AWS_REGION'] && ENV['AWS_ACCESS_KEY_ID']
+        raise "AWS connection configuration missing from your environment:" +
+                    " AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']}" +
+                    " AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY}']}" +
+                    " AWS_REGION=#{ENV['AWS_REGION']}"
+      end
       unless @bucket &&  @folder
         raise "Missing S3 load configs: bucket=#{@bucket} and folder=#{@folder} ."
       end
