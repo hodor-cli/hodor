@@ -1,0 +1,6 @@
+{:rspec { :default_shell_path "/usr/bin"
+          :nameNode "#required this must be defined in order for the app to work"
+          :fakeNode "#required to make the test fail twice"
+          :ssh_user "#required to access the cluster" }}
+
+

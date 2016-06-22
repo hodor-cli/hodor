@@ -1,12 +1,12 @@
 secrets:
-  - yml:
-     local:
-       folder: config/.private
-       config_file_name: secrets
   - edn:
      local:
        folder: config
        config_file_name: secrets
+  - yml:
+       local:
+         folder: config/.private
+         config_file_name: secrets
 clusters:
   - yml:
      local:
@@ -35,4 +35,30 @@ egress:
      local:
        folder: tst_folder
        config_file_name: clusters
-
+secrets_override:
+  - yml:
+     local:
+       folder: config
+       config_file_name: secrets_override
+  - yml:
+     local:
+       folder: config/.private
+       config_file_name: secrets
+clusters_bad:
+  - edn:
+     local:
+       folder: config
+       config_file_name: clusters_override
+  - yml:
+     local:
+       folder: config
+       config_file_name: clusters
+clusters_good:
+  - yml:
+     local:
+       folder: config
+       config_file_name: clusters
+  - edn:
+     local:
+       folder: config
+       config_file_name: clusters_override.edn

@@ -36,7 +36,7 @@ module Hodor::Config
         end
       end
 
-      context "no filename"  do
+      context "no config filename"  do
         let(:props) { empty_properties }
         let(:error_message) { "Missing load configs. Input: properties={} and filename= ." }
         it "raises a not error" do
@@ -44,10 +44,12 @@ module Hodor::Config
         end
       end
 
-      context "file does not exist" do
+      context "config file does not exist" do
         let(:props) { invalid_location }
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
+        let(:logger_stub) { instance_double("Logger", :warn => nil) }
         it "warns there is no file and returns nil" do
+          expect_any_instance_of(Hodor::Environment).to receive(:logger).twice { logger_stub }
           expect(subject.logger).to receive(:warn).with(/No file at/)
           expect(subject.load_text).to be_nil
         end

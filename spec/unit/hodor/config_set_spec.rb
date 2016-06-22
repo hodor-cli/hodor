@@ -5,10 +5,8 @@ module Hodor
   describe ConfigSet do
 
     describe "Required Class Methods" do
-
       subject(:config) { Hodor::ConfigSet.methods  }
 
-      # Public methods
       it { should include :config_definitions_sets }
     end
 
@@ -19,8 +17,8 @@ module Hodor
         expect(File).to receive(:exists?).with(/load_sets.yml/).once { true }
         expect(File).to receive(:read).with(/load_sets.yml/).once { good_definition_set }
         results = subject.config_hash
-        expect(results.length).to eq 3
-        expect(results.keys).to eq([:secrets, :clusters, :egress])
+        expect(results.length).to eq 6
+        expect(results.keys).to eq([:secrets, :clusters, :egress, :secrets_override, :clusters_bad, :clusters_good])
         expect(results[:clusters]).to be_kind_of(Array)
         expect(results[:clusters].length).to eq 3
       end
@@ -35,15 +33,12 @@ module Hodor
       end
     end
 
-
     describe "Required Public Interface" do
 
       subject(:config) { Hodor::ConfigSet.instance_methods }
 
-      # Public fields
-      it { should include :logger }
-
       # Public methods
+      it { should include :logger }
       it { should include :env }
       it { should include :config_defs }
       it { should include :load }
@@ -62,13 +57,13 @@ module Hodor
 
         it "returns config defs " do
           expect(config.config_defs.length).to eq 2
-          expect(config.config_defs.map(&:keys).flatten).to eq([:yml, :edn])
+          expect(config.config_defs.map(&:keys).flatten).to eq([:edn, :yml])
         end
 
         it "returns a set of configs of the correct class " do
           expect(config.config_sets.length).to eq 2
-          expect(config.config_sets.map(&:class).map(&:name)).to eq(['Hodor::Config::YmlSource',
-                                                                     'Hodor::Config::EdnSource'])
+          expect(config.config_sets.map(&:class).map(&:name)).to eq(['Hodor::Config::EdnSource',
+                                                                     'Hodor::Config::YmlSource',])
         end
 
         it "merges config sets to get a single hash" do
@@ -81,8 +76,9 @@ module Hodor
           expect(File).to receive(:read).with(/secrets.yml/).once { good_secrets_private }
           expect(File).to receive(:exists?).with(/secrets.edn/).once { true }
           expect(File).to receive(:read).with(/secrets.edn/).once { good_secrets_basic }
-          expect(config.config_hash).to eq({ test: { all_props:{ test_prop: { test_key: "edn test value",
-                                                                                 test_key1: "test value1"}}}})
+          expect(config.config_hash).to eq({ test: { all_props:{ test_prop: { test_key: "test value",
+                                                                                 test_key1: "test value1" }}}})
+
         end
       end
 
@@ -106,6 +102,42 @@ module Hodor
       end
     end
 
+    describe "Required properties" do
+
+      subject(:config) { Hodor::ConfigSet.new(config_name) }
+
+      context 'Missing properties' do
+        let(:config_name) { 'secrets_override' }
+        let(:missing_secrets) {"Missing properties: test_key_o, #required talk to sys ops if you don't know this value."}
+        it "raises an error" do
+          override_secrets_yml
+          good_secrets_private
+
+          expect(File).to receive(:exists?).with(/secrets_override.yml/).once { true }
+          expect(File).to receive(:read).with(/secrets_override.yml/).once { override_secrets_yml }
+          expect(File).to receive(:exists?).with(/secrets.yml/).once { true }
+          expect(File).to receive(:read).with(/secrets.yml/).once { good_secrets_private }
+          expect {config.config_hash}.to raise_error(RuntimeError, missing_secrets)
+        end
+      end
+
+      context 'Missing in edn clusters file' do
+        let(:config_name) { 'clusters_bad' }
+        let(:missing_cluster_configs) {'Missing properties: '+
+                                        'nameNode, #required this must be defined in order for the app to work; '+
+                                        'fakeNode, #required to make the test fail twice.'}
+        it "raises an error" do
+          override_clusters_edn
+          clusters_yml
+          expect(File).to receive(:exists?).with(/clusters_override.edn/).once { true }
+          expect(File).to receive(:read).with(/clusters_override.edn/).once { override_clusters_edn }
+          expect(File).to receive(:exists?).with(/clusters.yml/).once { true }
+          expect(File).to receive(:read).with(/clusters.yml/).once { clusters_yml }
+          expect {config.config_hash}.to raise_error(RuntimeError, missing_cluster_configs)
+        end
+      end
+    end
+
     private
 
     def good_secrets_basic
@@ -118,6 +150,18 @@ module Hodor
 
     def good_definition_set
       @good_def_set ||= File.read('./spec/fixtures/config/load_sets.yml')
+    end
+
+    def override_secrets_yml
+      @override_secrets_yml ||= File.read('./spec/fixtures/config/secrets_override.yml')
+    end
+
+    def override_clusters_edn
+      @override_clusters_edn ||= File.read('./spec/fixtures/config/clusters_override.edn')
+    end
+
+    def clusters_yml
+      @clusters_yml ||= File.read('./spec/fixtures/config/clusters.yml')
     end
   end
 end
