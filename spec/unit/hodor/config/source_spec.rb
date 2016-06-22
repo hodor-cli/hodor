@@ -66,9 +66,8 @@ module Hodor::Config
         let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
         it "returns an empty hash" do
-          logger = instance_double("Logger", :warn => "")
-          expect_any_instance_of(Hodor::Config::Loader).to receive(:logger) {logger}
-          expect(subject.config_hash).to eq({})
+          expect_any_instance_of(Hodor::Config::Loader).to receive(:logger) { instance_double("Logger", :warn => "") }
+          expect(subject.config_hash).to eq({ })
         end
       end
 
