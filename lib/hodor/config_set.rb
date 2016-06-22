@@ -13,6 +13,8 @@ module Hodor
     LOAD_SETS_FILE_SPECIFICATION = BASE_LOCAL_FILE_SPECIFICATION.
                                     recursive_merge({ yml: { local: { config_file_name: 'load_sets' }}})
 
+    REQUIRED_TAG = "#required"
+
     def self.config_definitions_sets
       @@config_definition_sets ||= Hodor::Config::Source.new_source('load_sets', LOAD_SETS_FILE_SPECIFICATION)
     end
@@ -51,12 +53,45 @@ module Hodor
     end
 
     def config_hash
-      @config_hash ||= config_sets.each_with_object({}) { |in_configs, out_configs|
-                                                           out_configs.recursive_merge!(in_configs.config_hash)}
+      @config_hash ||= process
     end
 
     def process
+      raw_hash = config_sets.each_with_object({}) { |in_configs, out_configs|
+                                                    out_configs.recursive_merge!(in_configs.config_hash)}
+      missing_properties = []
+      missing_configs(missing_properties, raw_hash)
+      raise missing_properties_error(missing_properties) unless missing_properties.empty?
+      raw_hash
+    end
 
+    def missing_properties_error(missing_properties)
+       messages =  missing_properties.map{ |pair| "#{pair[0]}, #{pair[1]}"}
+      "Missing properties: #{ messages.join('; ') }."
+    end
+
+    def missing_configs(missing_config_props, configs)
+      configs.each_pair do |key, val|
+        if val.is_a?(Hash)
+          missing_configs(missing_config_props, val)
+        elsif val.is_a?(Array)
+          val.each do |element|
+            if val.is_a?(Hash)
+              missing_configs(missing_config_props, val)
+            elsif val.is_a?(Array)
+              raise "Configurations cannot contain multidimensional arrays"
+            else
+              missing_config_props << [key, val] if has_required_tag?(val)
+            end
+          end
+        else
+          missing_config_props << [key, val] if has_required_tag?(val)
+        end
+      end
+    end
+
+    def has_required_tag?(val)
+      val.is_a?(String) && val.start_with?(REQUIRED_TAG)
     end
 
     def load

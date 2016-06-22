@@ -112,18 +112,6 @@ class Hash
     end
   end
 
-  def self.deep_merge(source_hash, new_hash)
-  source_hash.merge(new_hash) do |key, old, new|
-    if new.respond_to?(:blank) && new.blank?
-      old
-    elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
-      deep_merge(old, new)
-    else
-      new
-    end
-  end
-  end
-
   def match strings
     select { |key,val|
       is_match = false
