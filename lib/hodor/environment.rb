@@ -71,7 +71,7 @@ module Hodor
     end
 
     def secrets
-      @secrets ||= Hodor::ConfigSet.new('secrets').config_hash
+      @secrets ||= Hodor::ConfigSet.new(:secrets).config_hash
     end
 
     def load_settings

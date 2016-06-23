@@ -36,6 +36,14 @@ module Hodor
         }
       end
 
+      desc "secrets", "List all known secrets for the environment"
+      def secrets
+        logger
+        env.secrets.each_pair { |k,v|
+          logger.info "#{k} :  #{v}"
+        }
+      end
+
       desc "print", "print values of named key/value pairs from the clusters.yml file"
       long_desc <<-LONGDESC
        Prints the value of a list of keys for the environment currently target.

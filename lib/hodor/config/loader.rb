@@ -1,6 +1,3 @@
-#require 'active_support/core_ext/string'
-#require 'active_support/core_ext/hash'
-#require 'active_support/core_ext/hash/keys'
 require_relative '../environment'
 
 module Hodor::Config
@@ -16,7 +13,7 @@ module Hodor::Config
     end
 
     def logger
-      env.logger
+      Hodor::Environment.instance.logger
     end
 
     def env
