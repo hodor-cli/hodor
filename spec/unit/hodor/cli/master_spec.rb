@@ -8,6 +8,7 @@ module Hodor::Cli
       # Public methods
       it { should include :print }
       it { should include :config }
+      it { should include :secrets }
       it { should include :exec }
       it { should include :ssh_config }
     end

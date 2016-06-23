@@ -1,5 +1,5 @@
-require_relative 'loader'
 require 'aws-sdk'
+require_relative 'loader'
 
 module Hodor::Config
   class S3Loader < Loader

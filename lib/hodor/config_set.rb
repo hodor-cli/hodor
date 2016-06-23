@@ -1,3 +1,4 @@
+require 'hodor'
 require 'erb'
 require 'yaml'
 require_relative 'config/source'

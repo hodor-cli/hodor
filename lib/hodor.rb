@@ -85,25 +85,25 @@ class Hash
   end
 
   def recursive_merge(new_hash)
-    self.merge(new_hash) do |key, old, new|
-      if new.respond_to?(:blank) && new.blank?
-        old
-      elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
-        old.recursive_merge(new)
+    self.merge(new_hash) do |k, old_val, new_val|
+      if new_val.respond_to?(:blank) && new_val.blank?
+        old_val
+      elsif (old_val.kind_of?(Hash) and new_val.kind_of?(Hash))
+        old_val.recursive_merge(new_val)
       else
-        new
+        new_val
       end
     end
   end
 
   def recursive_merge!(new_hash)
-    self.merge!(new_hash) do |key, old, new|
-      if new.respond_to?(:blank) && new.blank?
-        old
-      elsif (old.kind_of?(Hash) and new.kind_of?(Hash))
-        old.recursive_merge!(new)
+    self.merge!(new_hash) do |k, old_val, new_val|
+      if new_val.respond_to?(:blank) && new_val.blank?
+        old_val
+      elsif (old_val.kind_of?(Hash) and new_val.kind_of?(Hash))
+        old_val.recursive_merge!(new_val)
       else
-        new
+        new_val
       end
     end
   end
