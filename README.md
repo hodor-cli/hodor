@@ -18,6 +18,7 @@ $ hodor help oozie                      # Prints an overview of the Oozie namesp
 $ hodor help oozie:display_job          # Prints detailed information about the display_job command, arguments and options
 $ hodor oozie:topic drivers.yml         # Provides an overview of a key concept (drivers.yml) utilized by the namespace
 $ hodor master:topic clusters.yml       # Provides an overview of the clusters.yml file and its central role in Hodor
+$ hodor master:topic secrets            # Overview of how to configure environment to manage and store sensitive information safely 
 ```
 
 Hodor Setup and Aliasing
