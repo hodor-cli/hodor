@@ -7,35 +7,8 @@ module Hodor::Config
 
   describe Source do
 
-    describe "Required Class Method" do
-      subject { Source.methods }
-      # Class method
-      it { should include :new_source }
-    end
-
-    describe "new_source" do
-      subject {Source.new_source("test", path_def)}
-
-      context "edn format type" do
-        let(:path_def) { { edn: { tst: 'tst' }} }
-        it { should be_kind_of(EdnSource) }
-      end
-
-      context "yml format type" do
-        let(:path_def) { { yml: { tst: 'tst' }} }
-        it { should be_kind_of(YmlSource) }
-      end
-
-      context "bad format type" do
-        let(:path_def) { { bad_format: { tst: 'tst' }} }
-        it "raises a not implemented error" do
-          expect {subject}.to raise_error(NotImplementedError, "Bad Format is not a supported format")
-        end
-      end
-    end
-
     describe "local loading with new config set construction" do
-      subject {Source.new_source(name, path_def)}
+      subject {EdnSource.new(name, path_def[:edn])}
       let(:expected_hash) { { test: { all_props: { test_prop: { test_key: "test value"}}}} }
       context "edn format reading local secrets file" do
         let(:name) { "TestConfiguration"}
@@ -47,12 +20,14 @@ module Hodor::Config
           expect(results.deep_symbolize_keys).to eq(expected_hash)
         end
       end
+    end
 
+    describe "local loading YML with new config set construction" do
+      subject {YmlSource.new('test configuration', path_def[:yml])}
+      let(:expected_hash) { { test: { all_props: { test_prop: { test_key: "test value"}}}} }
       context "yml format reading local secrets file" do
-        let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'secrets' }}} }
         before do
-
         end
         it "returns hash containing secrets" do
           secrets_reading_yml
@@ -63,7 +38,6 @@ module Hodor::Config
       end
 
       context "file does not exist" do
-        let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config/.private', config_file_name: 'bad_name' }}} }
         it "returns an empty hash" do
           expect_any_instance_of(Hodor::Config::Loader).to receive(:logger) { instance_double("Logger", :warn => "") }
@@ -72,7 +46,6 @@ module Hodor::Config
       end
 
       context "yml format reading local file" do
-        let(:name) { "TestConfiguration"}
         let(:path_def) { { yml: { local: { folder: 'config', config_file_name: 'clusters' }}} }
         it "returns hash containing secrets" do
           results = subject.config_hash
@@ -80,6 +53,7 @@ module Hodor::Config
           expect(results.keys).to eq( [:rspec])
         end
       end
+
     end
 
     describe "Required base class instance methods" do
@@ -132,6 +106,5 @@ module Hodor::Config
     def good_secrets_private_edn
       @good_secrets_private ||= File.read('./spec/fixtures/config/.private/secrets.edn')
     end
-
   end
 end

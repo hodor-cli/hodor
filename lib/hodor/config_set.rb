@@ -17,13 +17,12 @@ module Hodor
     REQUIRED_TAG = "#required"
 
     def self.config_definitions_sets
-      @@config_definition_sets ||= Hodor::Config::Source.new_source('load_sets', LOAD_SETS_FILE_SPECIFICATION)
+      @@config_definition_sets ||= Hodor::Config::YmlSource.new('load_sets', LOAD_SETS_FILE_SPECIFICATION[:yml])
     end
 
     def initialize(config_name)
       @config_name = config_name
     end
-
 
     def env
       Environment.instance
@@ -99,11 +98,21 @@ module Hodor
       out_set = []
       config_defs.each do |conf_def|
         set_name = "#{conf_def.keys.first}:#{config_name}"
-        out_set << Hodor::Config::Source.new_source(set_name, conf_def)
+        out_set << load_config_source(set_name, conf_def)
       end
       out_set
     end
 
+    def load_config_source(set_name, path_def)
+      format_type = path_def.keys.first
+      props = path_def[format_type].deep_symbolize_keys
+      if [:yml, :edn].include? format_type.to_sym
+        eval_string = 'Hodor::Config::' + "#{format_type.to_s.downcase}_source".camelize + '.new(set_name, props)'
+        eval(eval_string)
+      else
+        raise NotImplementedError.new("#{format_type.to_s.titleize} is not a supported format")
+      end
+    end
   end
 end
 

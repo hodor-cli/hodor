@@ -46,6 +46,7 @@ module Hodor
       it { should include :process }
       it { should include :config_hash }
       it { should include :config_name }
+      it { should include :load_config_source }
     end
 
     describe "Instance methods" do
@@ -134,6 +135,27 @@ module Hodor
           expect(File).to receive(:exists?).with(/clusters.yml/).once { true }
           expect(File).to receive(:read).with(/clusters.yml/).once { clusters_yml }
           expect {config.config_hash}.to raise_error(RuntimeError, missing_cluster_configs)
+        end
+      end
+    end
+
+    describe "loading a config source" do
+      subject { Hodor::ConfigSet.new('tst').load_config_source('tst', path_def)  }
+
+      context "edn format type" do
+        let(:path_def) { { edn: { tst: 'tst' }} }
+        it { should be_kind_of(Hodor::Config::EdnSource) }
+      end
+
+      context "yml format type" do
+        let(:path_def) { { yml: { tst: 'tst' }} }
+        it { should be_kind_of(Hodor::Config::YmlSource) }
+      end
+
+      context "bad format type" do
+        let(:path_def) { { bad_format: { tst: 'tst' }} }
+        it "raises a not implemented error" do
+          expect {subject}.to raise_error(NotImplementedError, "Bad Format is not a supported format")
         end
       end
     end
