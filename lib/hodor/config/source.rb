@@ -3,20 +3,9 @@ require 'active_support/core_ext/string'
 module Hodor::Config
   class Source
     attr_accessor :properties, :defaults, :name, :loader
-    def self.new_source(name, path_def)
-      format_type = path_def.keys.first
-      props = path_def[format_type].deep_symbolize_keys
-      if [:yml, :edn].include? format_type.to_sym
-        eval_string = 'Hodor::Config::' + "#{format_type.to_s.downcase}_source".camelize + '.new(name, props)'
-        eval(eval_string)
-      else
-        raise NotImplementedError.new("#{format_type.to_s.titleize} is not a supported format")
-      end
-    end
 
     def initialize(name, props)
       @properties = props
-      @defaults = defaults
       @name = name
     end
 
@@ -38,8 +27,8 @@ module Hodor::Config
       end
     end
 
-    require_relative 'yml_source'
-    require_relative 'edn_source'
+    #require_relative 'yml_source'
+    #require_relative 'edn_source'
     require_relative 'local_loader'
     require_relative 's3_loader'
   end

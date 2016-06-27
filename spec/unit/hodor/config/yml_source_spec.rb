@@ -1,4 +1,4 @@
-require 'hodor/config/source'
+require 'hodor/config/yml_source'
 
 module Hodor::Config
 
