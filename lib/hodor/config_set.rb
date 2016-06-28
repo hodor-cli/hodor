@@ -2,6 +2,8 @@ require 'hodor'
 require 'erb'
 require 'yaml'
 require_relative 'config/source'
+require_relative 'config/yml_source'
+require_relative 'config/edn_source'
 
 module Hodor
   class ConfigSet
