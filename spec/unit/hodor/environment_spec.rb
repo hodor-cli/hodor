@@ -56,6 +56,7 @@ module Hodor
 
       it 'loads and caches secrets' do
         expect_any_instance_of(Hodor::ConfigSet).to receive(:config_hash).once { { a: 'ok' } }
+        env.clear_secrets
         expect(env.secrets).to eq({ a: 'ok' })
         expect(env.secrets).to eq({ a: 'ok' })
       end

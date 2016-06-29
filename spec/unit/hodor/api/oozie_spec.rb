@@ -1,14 +1,14 @@
 module Hodor
   describe Oozie do
     describe 'Required Public Interface' do
-      subject { Hodor::Oozie }
+      subject { Hodor::Oozie.methods }
 
       # Public methods
-      it { should respond_to? :job_by_id }
-      it { should respond_to? :job_by_path }
-      it { should respond_to? :change_job }
-      it { should respond_to? :compose_job_file }
-      it { should respond_to? :run_job }
+      it { should include :job_by_id }
+      it { should include :job_by_path }
+      it { should include :change_job }
+      it { should include :compose_job_file }
+      it { should include :run_job }
     end
     context 'Filename prefixes' do
       let(:prefix) { 'Test_prefix_' }
