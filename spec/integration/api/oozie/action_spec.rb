@@ -1,32 +1,32 @@
 module Hodor::Oozie
   describe Action do
     describe "Required Public Interface" do
-      subject { Hodor::Oozie::Action }
+      subject { Hodor::Oozie::Action.instance_methods }
 
       # Public fields
-      it { should respond_to? :id }
-      it { should respond_to? :json }
-      it { should respond_to? :status }
-      it { should respond_to? :parent_id }
-      it { should respond_to? :error_message }
-      it { should respond_to? :data }
-      it { should respond_to? :transition }
-      it { should respond_to? :external_status }
-      it { should respond_to? :cred }
-      it { should respond_to? :type }
-      it { should respond_to? :end_time }
-      it { should respond_to? :external_id }
-      it { should respond_to? :start_time }
-      it { should respond_to? :external_child_ids }
-      it { should respond_to? :name }
-      it { should respond_to? :error_code }
-      it { should respond_to? :tracker_url }
-      it { should respond_to? :retries }
-      it { should respond_to? :to_string }
-      it { should respond_to? :console_url }
+      it { should include  :id }
+      it { should include  :json }
+      it { should include  :status }
+      it { should include  :parent_id }
+      it { should include  :error_message }
+      it { should include  :data }
+      it { should include  :transition }
+      it { should include  :external_status }
+      it { should include  :cred }
+      it { should include  :type }
+      it { should include  :end_time }
+      it { should include  :external_id }
+      it { should include  :start_time }
+      it { should include  :external_child_ids }
+      it { should include  :name }
+      it { should include  :error_code }
+      it { should include  :tracker_url }
+      it { should include  :retries }
+      it { should include  :to_string }
+      it { should include  :console_url }
 
       # Public methods
-      it { should respond_to? :children }
+      it { should include  :children }
     end
 
     context "Request action by job id" do

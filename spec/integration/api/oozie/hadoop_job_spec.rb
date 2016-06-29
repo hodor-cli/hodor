@@ -14,10 +14,12 @@ module Hodor::Oozie
     context "Request action by job id" do
       include_context "hodor api" do
         let(:playback) { :sample_hadoop_job }
+        let(:env) { Hodor::Environment.instance }
       end
 
       before(:each) do
         expect(session).not_to receive(:rest_call)
+        expect(env).to receive(:secrets)
         @job = oozie.job_by_id "job_1443733596356_96843"
       end
 

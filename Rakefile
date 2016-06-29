@@ -73,7 +73,7 @@ namespace :spec do
     RSpec::Core::RakeTask.new("spec:unit")  do |t|
       t.pattern = 'spec/unit/**/*_spec.rb'
       t.fail_on_error = false
-      t.rspec_opts = %w(--color --require spec_helper --format progress)
+      t.rspec_opts = %w(--color --require spec_helper --format d) #Use '--format progress' to restore previous functionality
     end
   end
 
@@ -82,7 +82,7 @@ namespace :spec do
     RSpec::Core::RakeTask.new("spec:integration")  do |t|
       t.pattern = 'spec/integration/**/*_spec.rb'
       t.fail_on_error = false
-      t.rspec_opts = %w(--color --require spec_helper --format progress)
+      t.rspec_opts = %w(--color --require spec_helper --format d) #Use '--format progress' to restore previous functionality
     end
   end
 
