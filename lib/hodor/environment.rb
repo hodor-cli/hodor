@@ -277,7 +277,7 @@ module Hodor
         val.each_pair { |k, v|
           flat_vals += yml_flatten("#{parent_key}.#{k}", v)
         }
-      else
+      elsif !parent_key.nil?
         parent_key = parent_key[1..-1] if parent_key.start_with?('.')
         flat_vals = ["#{parent_key} = #{val}"]
       end
