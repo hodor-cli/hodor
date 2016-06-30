@@ -101,39 +101,34 @@ module Hodor::Oozie
       end
 
       def select_job(job)
-        if job && (job =~ /job.properties.erb$/ || job =~ /job.properties/)
-          selected_job = { dirname: File.dirname(job), basename: File.basename(job), file: job, display_name: job }
-        else
-          # load jobs.yml file
-          pwd = Dir.pwd
-          if File.exists?("jobs.yml")
-            jobs = env.yml_load(File.expand_path('jobs.yml', pwd))
-            marked_jobs = jobs.keys.select { |key| key.start_with?('^') }
-            marked_jobs.each { |mark|
-              jobs[mark[1..-1]] = jobs[mark]
+        # load jobs.yml file
+        pwd = Dir.pwd
+        if File.exists?("jobs.yml")
+          jobs = env.yml_load(File.expand_path('jobs.yml', pwd))
+          marked_jobs = jobs.keys.select { |key| key.start_with?('^') }
+          marked_jobs.each { |mark|
+            jobs[mark[1..-1]] = jobs[mark]
+          }
+          if job.nil?
+            # No job explicitly specified, so look for a
+            # marked job (i.e. job starting with ^)
+            jobs.each_pair { |key, val|
+              if key.to_s.strip.start_with?('^')
+                job = key.to_s
+              end
             }
-            if job.nil?
-              # No job explicitly specified, so look for a
-              # marked job (i.e. job starting with ^)
-              jobs.each_pair { |key, val|
-                if key.to_s.strip.start_with?('^')
-                  job = key.to_s
-                end
-              }
-              fail "You must specify which job from jobs.yml to run" if !job
-            end
-            jobs = jobs.symbolize_keys
-            if !jobs.has_key?(job.to_sym)
-              caret = "^#{job.to_s}"
-              fail "Job '#{job}' was not defined in jobs.yml" if !jobs.has_key?(caret.to_sym)
-            end
-            selected_job = jobs[job.to_sym]
-            selected_job[:name] = selected_job[:display_name] = job
-          else
-            fail "No jobs.yml file exists in the current directory. You must specify a jobs.yml file"
+            fail "You must specify which job from jobs.yml to run" if !job
           end
+          jobs = jobs.symbolize_keys
+          if !jobs.has_key?(job.to_sym)
+            caret = "^#{job.to_s}"
+            fail "Job '#{job}' was not defined in jobs.yml" if !jobs.has_key?(caret.to_sym)
+          end
+          selected_job = jobs[job.to_sym]
+          env.select_job(selected_job)
+        else
+          fail "No jobs.yml file exists in the current directory. You must specify a jobs.yml file"
         end
-        env.select_job(selected_job)
       end
 
       # collect all job.properties.erb files up to root of repo
@@ -141,14 +136,9 @@ module Hodor::Oozie
       # directories override properties in higher directories.)
       # If direct job properties file is provided, properties will
       # be interpolated using values in that file.
-      def compose_job_file(job, options = {})
-        pwd = Dir.pwd
-        if job.has_key?(:file)
-          raise "Job file '#{job[:file]}' not found" unless File.exists?(job[:file])
-          src_job_file = File.expand_path(File.join(job[:dirname], '.tmp', job[:basename]), pwd)
-          FileUtils.mkdir File.dirname(src_job_file) unless Dir.exists?(File.dirname(src_job_file))
-          FileUtils.cp(job[:file], src_job_file)
-        elsif job.has_key?(:name)
+      def compose_job_file(direct_job = nil, options = {})
+        if direct_job.nil?
+          pwd = Dir.pwd
           paths = env.paths_from_root(pwd)
           composite_jobfile = paths.inject('') { |result, path|
             jobfile = File.expand_path('job.properties.erb', path)
@@ -164,19 +154,28 @@ module Hodor::Oozie
             f.puts composite_jobfile
           end
         else
-          logger.error "Unknown job type: #{job.inspect}"
+          raise "Job file '#{direct_job}' not found" unless File.exists?(direct_job)
+          src_job_file = File.expand_path(File.join(File.dirname(direct_job), '.tmp', File.basename(direct_job)), pwd)
+          FileUtils.mkdir File.dirname(src_job_file) unless Dir.exists?(File.dirname(src_job_file))
+          FileUtils.cp(direct_job, src_job_file)
         end
         job_file = src_job_file.sub(/\.erb$/,'')
-        generate_and_write_job_file(job_file, src_job_file, job, options)
+        generate_and_write_job_file(job_file, src_job_file, options)
       end
 
-      def generate_and_write_job_file(file_name, in_file, job, options = {})
+      def generate_and_write_job_file(file_name, in_file, options = {})
         prefix = options[:file_prefix] || ''
         out_file = append_prefix_to_filename(file_name, prefix)
         job_content = env.erb_load(in_file) || ''
+        if @for_date
+          if env.job[:hour_offset]
+            options[:startTime] = "#{@for_date}T#{@for_hour}:#{hour_offset}"
+
+          end
+        end
         job_props = options.inject('') { |accumulator, kvp|
           case kvp[0].to_sym
-          when :file_prefix, :file_name_prefix, :dry_run;
+          when :pushd, :path, :file_prefix, :file_name_prefix, :dry_run;
           else
             accumulator += "#{kvp[0]} = #{kvp[1]}\n"
           end
@@ -184,11 +183,10 @@ module Hodor::Oozie
         }
         unless job_props.empty?
           overrides = "\n# Property Overrides\n# ====================\n" + job_props
+          puts overrides
           job_content += overrides
         end
         File.open(out_file, 'w') { |f| f.write(job_content) } unless in_file.eql?(out_file)
-        job[:overrides] = job_props
-        job[:executable] = out_file
         out_file
       end
 
@@ -196,6 +194,7 @@ module Hodor::Oozie
         insert_index =  file_name.rindex(File::SEPARATOR)
         String.new(file_name).insert((insert_index.nil? ? 0 : insert_index+1) , prefix)
       end
+
 
       def deploy_job(job, clean_deploy)
         select_job(job)
@@ -211,21 +210,37 @@ module Hodor::Oozie
 
       # If job references a job.properties or job.properties.erb file, that file will be
       # used directly to interpolate job property values.
-      def run_job(job = nil, options = {})
-        jobfile = compose_job_file(select_job(job), options)
+      def run_job(job = nil, options)
+        pushd = options[:pushd] || options[:path]
+        if pushd
+          original_pwd = FileUtils.pwd
+          FileUtils.cd(pushd)
+        end
+        if @from_date
+          puts "from date = #{@from_date}"
+          options[:startTime] = "#{@from_date}T00:00Z"
+        end
+        if job && (job =~ /job.properties.erb$/ || job =~ /job.properties/)
+          jobfile = compose_job_file(job, options)
+        else
+          select_job(job)
+          jobfile = compose_job_file(nil, options)
+        end
         unless options[:dry_run]
-          job = env.job
-          logger.info "RUN JOB: #{job[:display_name]}"
-          if job.has_key?(:overrides)
-            logger.info "Propery Overrides:"
-            job[:overrides].each_line { |line|
-              logger.info "    #{line.strip}"
-            }
-          end
           runfile = env.deploy_tmp_file(jobfile)
           env.ssh "oozie job -oozie :oozie_url -config #{runfile} -run", echo: true, echo_cmd: true
         end
         jobfile
+      rescue StandardError
+        raise
+      ensure
+        FileUtils.cd(original_pwd) if pushd
+      end
+
+      def for(from, to=nil, &block)
+        @from_date = from
+        block.yield(self)
+        @from_date = nil
       end
     end
 end
