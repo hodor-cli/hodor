@@ -136,6 +136,12 @@ module Hodor
         logger.info ""
       end
 
+      pushd = options[:pushd]
+      if pushd
+        original_pwd = FileUtils.pwd
+        FileUtils.cd(options[:pushd])
+      end
+
       disc_path = env.path_on_disc(path)
       git_path = env.path_on_github(path)
       hdfs_path = path_on_hdfs(path)
@@ -188,6 +194,8 @@ module Hodor
         clean: env.clean? ? "true" : "false"
     else
       env.run_local %Q[touch '#{sync_file}'] unless env.dryrun?
+    ensure
+      FileUtils.cd(original_pwd) if pushd
     end
 
     class FailedToGetFile < Hodor::NestedError; end
