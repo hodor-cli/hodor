@@ -68,6 +68,9 @@ module Hodor
 
     def initialize
       @options = {}
+      # Logger fails if attempt is made to use it before it is loaded
+      # so it is preloaded here.
+      logger
     end
 
     def secrets
@@ -79,25 +82,23 @@ module Hodor
     end
 
     def load_settings
-      # Logger fails if attempt is made to use it before it is loaded
-      # so it is preloaded here.
-      logger
-      target_env = hadoop_env.to_sym
-      @clusters = yml_load('config/clusters.yml')
-      secrets
-      @clusters.recursive_merge!(@secrets) if @secrets
-      @target_cluster = @clusters[target_env]
-      if @target_cluster.nil?
-        raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+      unless @loaded
+        target_env = hadoop_env.to_sym
+        @clusters = yml_load('config/clusters.yml')
+        secrets
+        @clusters.recursive_merge!(@secrets) if @secrets
+        @target_cluster = @clusters[target_env]
+        if @target_cluster.nil?
+          raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+        end
+
+        if File.exist?('config/local.yml')
+          @target_cluster.merge! yml_load('config/local.yml')
+        end
+
+        @target_cluster[:target] = target_env
+        @loaded = true
       end
-
-      if File.exist?('config/local.yml')
-        @target_cluster.merge! yml_load('config/local.yml')
-      end
-
-      @target_cluster[:target] = target_env
-
-      @loaded = true
       yml_expand(@target_cluster, [@clusters])
     end
 
@@ -189,7 +190,7 @@ module Hodor
     end
 
     def target_cluster
-      load_settings if !@loaded || !@target_cluster
+      load_settings
       raise "No settings for target cluster '#{hadoop_env}' were loaded" if !@loaded || !@target_cluster
       @target_cluster
     end

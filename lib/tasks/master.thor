@@ -38,9 +38,6 @@ module Hodor
 
       desc "secrets", "List all known secrets for the environment"
       def secrets
-        # Logger fails if attempt is made to use it before it is loaded
-        # so it is preloaded here.
-        logger
         env.secrets.each_pair { |k,v|
           logger.info "#{k} :  #{v}"
         }
