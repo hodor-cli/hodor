@@ -31,9 +31,6 @@ module Hodor
 
       desc "config", "List all known variable expansions for the target Hadoop environment"
       def config
-        # Logger faiks if attempt is made to use it before it is loaded
-        # so it is preloaded here.
-        logger
         env.settings.each_pair { |k,v|
           logger.info "#{k} :  #{v}"
         }
@@ -41,6 +38,8 @@ module Hodor
 
       desc "secrets", "List all known secrets for the environment"
       def secrets
+        # Logger fails if attempt is made to use it before it is loaded
+        # so it is preloaded here.
         logger
         env.secrets.each_pair { |k,v|
           logger.info "#{k} :  #{v}"

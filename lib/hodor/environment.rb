@@ -79,6 +79,9 @@ module Hodor
     end
 
     def load_settings
+      # Logger fails if attempt is made to use it before it is loaded
+      # so it is preloaded here.
+      logger
       target_env = hadoop_env.to_sym
       @clusters = yml_load('config/clusters.yml')
       secrets
