@@ -130,21 +130,21 @@ module Hodor
 
           it 'should change to new path before run_job, and restore original path when done' do
             expect(Hodor::Environment.instance).to receive(:yml_load).once
-              .with(/drivers\/testbench\/jobs\.yml/).and_call_original
+                                                       .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
             allow(File).to receive(:read).at_least(:once)
-                .and_wrap_original do |original, *args|
-                  if (args[0] =~ /jobs.yml$/)
-                    %Q[
+                               .and_wrap_original do |original, *args|
+              if (args[0] =~ /jobs.yml$/)
+                %Q[
                       ^valid_job:
                         deploy: noop
                         properties: |
                           startTime=<dynamic>
                           endTime=<dynamic>
                     ]
-                  else
-                    original.call(*args)
-                  end
+              else
+                original.call(*args)
+              end
             end
 
             expect(env).to receive(:deploy_tmp_file).once { }
@@ -161,11 +161,12 @@ module Hodor
             end
 
             expect {
-              oozie.run_job(nil, { 
-                pushd: 'some/new/path'
+              oozie.run_job(nil, {
+                  pushd: 'some/new/path'
               })
             }.not_to raise_error
           end
+
 
           it 'should deploy and run the Oozie job' do
             expect(env).to receive(:yml_load).once
@@ -194,7 +195,7 @@ module Hodor
           context 'dry_run option is set to true' do
             it 'generates properties file but should not deploy and run the Oozie job' do
               expect(env).to receive(:yml_load).once
-                                                         .with(/drivers\/testbench\/jobs\.yml/).and_call_original
+                                 .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
               allow(File).to receive(:read).at_least(:once)
                                  .and_wrap_original do |original, *args|
