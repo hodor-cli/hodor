@@ -18,61 +18,35 @@ module Hodor
 
     REQUIRED_TAG = "#required"
 
+    DEFAULT_ACTION_ON_REQUIRED_MISSING = :warn
+
     def self.config_definitions_sets
       @@config_definition_sets ||= Hodor::Config::YmlSource.new('load_sets', LOAD_SETS_FILE_SPECIFICATION[:yml])
     end
 
-    def initialize(config_name)
-      @config_name = config_name
+    def self.has_required_tag?(val)
+      val.is_a?(String) && val.start_with?(REQUIRED_TAG)
     end
 
-    def env
-      Environment.instance
+    def self.logger
+      @@logger = Environment.instance.logger
     end
 
-    def logger
-      env.logger
-    end
-
-    def config_sets
-      @config_sets ||= load
-    end
-
-    def config_defs
-      @config_defs ||= if self.class.config_definitions_sets.config_hash.include? config_name.to_sym
-                         self.class.config_definitions_sets.config_hash[config_name.to_sym]
-                       else
-                         logger.warn("There is no config definition set for #{config_name.to_s} " +
-                               "defined in config/load_sets.yml. Hodor will look for the file " +
-                               "in the default location: config/#{config_name.to_s}.yml")
-                         [BASE_LOCAL_FILE_SPECIFICATION.
-                             recursive_merge({ yml: { local: { config_file_name: config_name.to_s }}})]
-                       end
-    end
-
-    def logger
-      env.logger
-    end
-
-    def config_hash
-      @config_hash ||= process
-    end
-
-    def process
-      raw_hash = config_sets.each_with_object({}) { |in_configs, out_configs|
-                                                    out_configs.recursive_merge!(in_configs.config_hash)}
+    def self.check_for_missing_configs(tst_hash, on_required_missing_do=:warn)
       missing_properties = []
-      missing_configs(missing_properties, raw_hash)
-      raise missing_properties_error(missing_properties) unless missing_properties.empty?
-      raw_hash
+      missing_configs(missing_properties, tst_hash)
+      unless missing_properties.empty?
+        raise self.missing_properties_error(missing_properties)  if on_required_missing_do == :fail
+        logger.warn( self.missing_properties_error(missing_properties) ) if on_required_missing_do == :warn
+      end
     end
 
-    def missing_properties_error(missing_properties)
-       messages =  missing_properties.map{ |pair| "#{pair[0]}, #{pair[1]}"}
+    def self.missing_properties_error(missing_properties)
+      messages =  missing_properties.map{ |pair| "#{pair[0]} #{pair[1]}"}
       "Missing properties: #{ messages.join('; ') }."
     end
 
-    def missing_configs(missing_config_props, configs)
+    def self.missing_configs(missing_config_props, configs)
       configs.each_pair do |key, val|
         if val.is_a?(Hash)
           missing_configs(missing_config_props, val)
@@ -92,8 +66,63 @@ module Hodor
       end
     end
 
-    def has_required_tag?(val)
-      val.is_a?(String) && val.start_with?(REQUIRED_TAG)
+    def initialize(config_name)
+      @config_name = config_name
+    end
+
+    def env
+      Environment.instance
+    end
+
+    def logger
+      env.logger
+    end
+
+    def config_sets
+      @config_sets ||= load
+    end
+
+    def on_required_missing
+      load_source_info if @on_required_missing.nil?
+      @on_required_missing
+    end
+
+    def config_defs
+      load_source_info unless @config_defs
+      @config_defs
+    end
+
+    def load_source_info
+      if @config_defs.nil? || @check_required.nil?
+        if self.class.config_definitions_sets.config_hash.include? config_name.to_sym
+          full_definition = self.class.config_definitions_sets.config_hash[config_name.to_sym]
+          @config_defs, @on_required_missing = full_definition[:sources],
+                                               full_definition[:on_required_missing]
+        else
+          logger.warn("There is no config definition set for #{config_name.to_s} " +
+                          "defined in config/load_sets.yml. Hodor will look for the file " +
+                          "in the default location: config/#{config_name.to_s}.yml")
+          @config_defs, @on_required_missing = [BASE_LOCAL_FILE_SPECIFICATION.recursive_merge(
+                                                    { yml: { local: { config_file_name: config_name.to_s }}})],
+                                                DEFAULT_ACTION_ON_REQUIRED_MISSING
+        end
+      end
+    end
+
+    def logger
+      env.logger
+    end
+
+    def config_hash
+      @config_hash ||= process
+    end
+
+    def process
+      raw_hash = config_sets.each_with_object({}) { |in_configs, out_configs|
+                                                    out_configs.recursive_merge!(in_configs.config_hash)}
+      Hodor::ConfigSet.check_for_missing_configs(raw_hash, on_required_missing)
+
+      raw_hash
     end
 
     def load

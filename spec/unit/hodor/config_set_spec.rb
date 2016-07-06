@@ -8,6 +8,10 @@ module Hodor
       subject(:config) { Hodor::ConfigSet.methods  }
 
       it { should include :config_definitions_sets }
+      it { should include :has_required_tag? }
+      it { should include :check_for_missing_configs }
+      it { should include :missing_properties_error }
+      it { should include :missing_configs }
     end
 
     context "Test reading config definition sets " do
@@ -19,12 +23,65 @@ module Hodor
         results = subject.config_hash
         expect(results.length).to eq 6
         expect(results.keys).to eq([:secrets, :clusters, :egress, :secrets_override, :clusters_bad, :clusters_good])
-        expect(results[:clusters]).to be_kind_of(Array)
-        expect(results[:clusters].length).to eq 3
+        expect(results[:clusters]).to be_kind_of(Hash)
+        expect(results[:clusters].keys).to eq([:on_required_missing,:sources])
+        expect(results[:clusters][:sources]).to be_kind_of(Array)
+        expect(results[:clusters][:sources].length).to eq 3
+        expect(results[:clusters][:on_required_missing]).to eq :warn
       end
     end
 
-    describe 'class methods and constants' do
+    context "Test checking for required properties" do
+      subject { ConfigSet.check_for_missing_configs(tst_hash, on_required_missing_do) }
+      context "Hash missing required properties"  do
+        let(:tst_hash) { { missing1: "#required missing1", inner_hash: { missing_inner: "#required inner", present: "okay"} }}
+        let(:missing_message) { 'Missing properties: missing1 #required missing1; missing_inner #required inner.' }
+
+        context "fail on missing" do
+          let(:on_required_missing_do) { :fail }
+          it "Raises and error" do
+            expect {subject}.to raise_error(RuntimeError, missing_message)
+          end
+        end
+
+        context "warn on missing" do
+          let(:on_required_missing_do) { :warn }
+          it "Warns with error message error" do
+            expect(ConfigSet.logger).to receive(:warn)
+            subject
+          end
+        end
+
+        context "ignore on missing" do
+          let(:on_required_missing_do) { :debug }
+          it "Warns with error message error" do
+            expect(ConfigSet.logger).to_not receive(:debug)
+            expect(subject.nil?)
+          end
+        end
+      end
+
+      context "Hash with no missing required properties"  do
+        let(:tst_hash) { { missing1: "all goo", inner_hash: { missing_inner: "all goo", present: "okay"} }}
+
+        context "no failure" do
+          let(:on_required_missing_do) { :fail }
+          it "Does not raise an error" do
+            expect {subject}.to_not raise_error(RuntimeError)
+          end
+        end
+
+        context "no warning" do
+          let(:on_required_missing_do) { :warn }
+          it "nothing missing" do
+            expect(ConfigSet.logger).to_not receive(:warn)
+            subject
+          end
+        end
+      end
+    end
+
+    describe 'constants' do
       it 'should return correct constants' do
         expect(Hodor::ConfigSet::LOAD_SETS_FILE_SPECIFICATION).to eq({ yml:
                                                                            { local:
@@ -47,6 +104,7 @@ module Hodor
       it { should include :config_hash }
       it { should include :config_name }
       it { should include :load_config_source }
+      it { should include :on_required_missing }
     end
 
     describe "Instance methods" do
@@ -109,7 +167,7 @@ module Hodor
 
       context 'Missing properties' do
         let(:config_name) { 'secrets_override' }
-        let(:missing_secrets) {"Missing properties: test_key_o, #required talk to sys ops if you don't know this value."}
+        let(:missing_secrets) {"Missing properties: test_key_o #required talk to sys ops if you don't know this value."}
         it "raises an error" do
           override_secrets_yml
           good_secrets_private
@@ -125,8 +183,8 @@ module Hodor
       context 'Missing in edn clusters file' do
         let(:config_name) { 'clusters_bad' }
         let(:missing_cluster_configs) {'Missing properties: '+
-                                        'nameNode, #required this must be defined in order for the app to work; '+
-                                        'fakeNode, #required to make the test fail twice.'}
+                                        'nameNode #required this must be defined in order for the app to work; '+
+                                        'fakeNode #required to make the test fail twice.'}
         it "raises an error" do
           override_clusters_edn
           clusters_yml

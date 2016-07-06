@@ -87,6 +87,7 @@ module Hodor
         @clusters = yml_load('config/clusters.yml')
         secrets
         @clusters.recursive_merge!(@secrets) if @secrets
+        Hodor::ConfigSet.check_for_missing_configs(@clusters, :fail)
         @target_cluster = @clusters[target_env]
         if @target_cluster.nil?
           raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
