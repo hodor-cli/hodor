@@ -33,6 +33,12 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "chronic"
   spec.add_runtime_dependency "ox"
 
+  # Gems needed for managing edn configs (Secret handling)
+
+  spec.add_runtime_dependency 'edn'
+  spec.add_runtime_dependency 'aws-sdk'
+  spec.add_runtime_dependency 'activesupport'
+
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "wrong"
   spec.add_development_dependency "simplecov"

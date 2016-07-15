@@ -15,8 +15,11 @@ module Hodor
       # Public methods
       it { should include :erb_sub }
       it { should include :erb_load }
+      it { should include :yml_expand}
+      it { should include :yml_flatten}
       it { should include :yml_load }
       it { should include :root }
+      it {should include :secrets}
     end
 
     describe 'Ensure usable test repo' do
@@ -51,25 +54,16 @@ module Hodor
         )
       end
 
+      it 'loads and caches secrets' do
+        expect_any_instance_of(Hodor::ConfigSet).to receive(:config_hash).once { { a: 'ok' } }
+        env.clear_secrets
+        expect(env.secrets).to eq({ a: 'ok' })
+        expect(env.secrets).to eq({ a: 'ok' })
+      end
+
       it 'loads settings'  do
         tmp =  env.load_settings
         expect(tmp).to eq base_cluster_configs
-      end
-    end
-    context 'transforming yaml' do
-      subject(:environment) { Hodor::Environment.instance }
-      let(:part_to_process) { "${name}:${^name}:${^^name}:${^^^name}" }
-      let(:processed_yml) { 'gg1:g1:c1:p1' }
-      let(:yml_read) { {rspec: { rspec: { parent: { name: "p1",
-                                                    child: { name: "c1",
-                                                                grandchild: { name: "g1",
-                                                                                 ggrandchild: { name: "gg1" }}}},
-                                          family_tree: part_to_process }}}}
-      let(:target_env) { environment.hadoop_env.to_sym }
-      let(:target_yml) { [yml_read[target_env]] }
-
-      it 'process yml variables' do
-        expect(environment.yml_expand(yml_read, target_yml)[:rspec][:rspec][:family_tree]).to eq processed_yml
       end
     end
   end

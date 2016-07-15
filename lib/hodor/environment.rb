@@ -1,20 +1,20 @@
 require 'singleton'
 
-require 'yaml'
-require 'erb'
 require 'log4r'
 require 'log4r/configurator'
 require 'tmpdir'
 require 'open4'
 require 'socket'
 require 'etc'
+require_relative 'util/yml_tools'
+require_relative 'config_set'
 
 include Log4r
 
 module Hodor
   class Environment
     include Singleton
-
+    include Util::YmlTools
     attr_reader :logger
     attr_accessor :options
 
@@ -42,24 +42,6 @@ module Hodor
       @logger
     end
 
-    def erb_sub(erb_body)
-      ERB.new(erb_body).result(self.instance_eval { binding })
-    end
-
-    def erb_load(filename, suppress_erb=false)
-      if File.exists?(filename)
-        file_contents = File.read(filename)
-        sub_content = suppress_erb ? file_contents : erb_sub(file_contents)
-        sub_content
-      elsif !filename.start_with?(root)
-        erb_load(File.join(root, filename))
-      end
-    end
-
-    def yml_load(filename) #, suppress_erb=false)
-      YAML.load(erb_load(filename, false)) # suppress_erb))
-    end
-
     def terse?
       options[:terse]
     end
@@ -85,25 +67,39 @@ module Hodor
     end
 
     def initialize
-      @options = {} 
+      @options = {}
+      # Logger fails if attempt is made to use it before it is loaded
+      # so it is preloaded here.
+      logger
+    end
+
+    def secrets
+      @secrets ||= Hodor::ConfigSet.new(:secrets).config_hash
+    end
+
+    def clear_secrets
+      @secrets = nil
     end
 
     def load_settings
-      target_env = hadoop_env.to_sym
-      @clusters = yml_load('config/clusters.yml')
+      unless @loaded
+        target_env = hadoop_env.to_sym
+        @clusters = yml_load('config/clusters.yml')
+        secrets
+        @clusters.recursive_merge!(@secrets) if @secrets
+        Hodor::ConfigSet.check_for_missing_configs(@clusters, :fail)
+        @target_cluster = @clusters[target_env]
+        if @target_cluster.nil?
+          raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+        end
 
-      @target_cluster = @clusters[target_env]
-      if @target_cluster.nil?
-        raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+        if File.exist?('config/local.yml')
+          @target_cluster.merge! yml_load('config/local.yml')
+        end
+
+        @target_cluster[:target] = target_env
+        @loaded = true
       end
-
-      if File.exist?('config/local.yml')
-        @target_cluster.merge! yml_load('config/local.yml')
-      end
-
-      @target_cluster[:target] = target_env
-
-      @loaded = true
       yml_expand(@target_cluster, [@clusters])
     end
 
@@ -195,7 +191,7 @@ module Hodor
     end
 
     def target_cluster
-      load_settings if !@loaded || !@target_cluster
+      load_settings
       raise "No settings for target cluster '#{hadoop_env}' were loaded" if !@loaded || !@target_cluster
       @target_cluster
     end
@@ -242,47 +238,7 @@ module Hodor
       va << " -p #{settings[:ssh_port] || 22}" 
     end
 
-    def yml_expand(val, parents)
-      if val.is_a? String
-        val.gsub(/\$\{.+?\}/) { |match|
-          cv = match.split(/\${|}/)
-          expr = cv[1]
-          ups = expr.split('^')
-          parent_index = parents.length - ups.length
-          parent = parents[parent_index]
-          parent_key = ups[-1]
-          parent_key = parent_key[1..-1] if parent_key.start_with?(':')
-          if parent.has_key?(parent_key)
-            parent[parent_key]
-          elsif parent.has_key?(parent_key.to_sym)
-            parent[parent_key.to_sym]
-          else
-            parent_key
-          end
-        }
-      elsif val.is_a? Hash
-        more_parents = parents << val
-        val.each_pair do |k, v|
-          exp_val = yml_expand(v, more_parents)
-          val[k] = exp_val
-        end
-      else
-        val
-      end
-    end
 
-    def yml_flatten(parent_key, val)
-      flat_vals = []
-      if val.is_a? Hash
-        val.each_pair { |k, v|
-          flat_vals += yml_flatten("#{parent_key}.#{k}", v)
-        }
-      else
-        parent_key = parent_key[1..-1] if parent_key.start_with?('.')
-        flat_vals = ["#{parent_key} = #{val}"]
-      end
-      flat_vals
-    end
 
     # Run an ssh command, performing any optional variable expansion
     # on the command line that might be necessary.
@@ -477,6 +433,5 @@ module Hodor
       end
       command_output
     end
-
   end
 end

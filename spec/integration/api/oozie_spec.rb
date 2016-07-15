@@ -1,20 +1,20 @@
 module Hodor
   describe Oozie do
     describe 'Required Public Interface' do
-      subject { Hodor::Oozie }
+      subject { Hodor::Oozie.methods }
 
       # Public methods
-      it { should respond_to? :job_by_id }
-      it { should respond_to? :job_by_path }
-      it { should respond_to? :change_job }
-      it { should respond_to? :compose_job_file }
-      it { should respond_to? :run_job }
+      it { should include :job_by_id }
+      it { should include :job_by_path }
+      it { should include :change_job }
+      it { should include :compose_job_file }
+      it { should include :run_job }
     end
 
     context 'when running an Oozie job' do
 
       subject(:oozie) { Hodor::Oozie }
-      subject(:env) { Hodor::Environment.instance }
+      let(:env) { Hodor::Environment.instance }
 
       context 'missing jobs.yml file' do
 
@@ -83,13 +83,15 @@ module Hodor
         context 'and a valid job id is specified' do
 
           before(:each) do
+            expect(env).to receive(:secrets).once
             use_settings hdfs_root: '/', hdfs_user: 'hdfs',
                          ssh_host: 'sample_domain.com', ssh_user: 'job_user'
             use_pwd 'drivers/testbench', true
           end
 
           it 'should build the expected runjob file that correctly applies property overrides' do
-            expect(Hodor::Environment.instance).to receive(:yml_load).once
+
+            expect(env).to receive(:yml_load).once
               .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
             allow(File).to receive(:read).at_least(:once)
@@ -128,21 +130,21 @@ module Hodor
 
           it 'should change to new path before run_job, and restore original path when done' do
             expect(Hodor::Environment.instance).to receive(:yml_load).once
-              .with(/drivers\/testbench\/jobs\.yml/).and_call_original
+                                                       .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
             allow(File).to receive(:read).at_least(:once)
-                .and_wrap_original do |original, *args|
-                  if (args[0] =~ /jobs.yml$/)
-                    %Q[
+                               .and_wrap_original do |original, *args|
+              if (args[0] =~ /jobs.yml$/)
+                %Q[
                       ^valid_job:
                         deploy: noop
                         properties: |
                           startTime=<dynamic>
                           endTime=<dynamic>
                     ]
-                  else
-                    original.call(*args)
-                  end
+              else
+                original.call(*args)
+              end
             end
 
             expect(env).to receive(:deploy_tmp_file).once { }
@@ -159,14 +161,15 @@ module Hodor
             end
 
             expect {
-              oozie.run_job(nil, { 
-                pushd: 'some/new/path'
+              oozie.run_job(nil, {
+                  pushd: 'some/new/path'
               })
             }.not_to raise_error
           end
 
+
           it 'should deploy and run the Oozie job' do
-            expect(Hodor::Environment.instance).to receive(:yml_load).once
+            expect(env).to receive(:yml_load).once
               .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
             allow(File).to receive(:read).at_least(:once)
@@ -191,8 +194,8 @@ module Hodor
 
           context 'dry_run option is set to true' do
             it 'generates properties file but should not deploy and run the Oozie job' do
-              expect(Hodor::Environment.instance).to receive(:yml_load).once
-                                                         .with(/drivers\/testbench\/jobs\.yml/).and_call_original
+              expect(env).to receive(:yml_load).once
+                                 .with(/drivers\/testbench\/jobs\.yml/).and_call_original
 
               allow(File).to receive(:read).at_least(:once)
                                  .and_wrap_original do |original, *args|
@@ -228,10 +231,10 @@ module Hodor
 
               expect(oozie).to receive(:compose_job_file).once.with(
                 hash_including(name: 'valid_job'),
-                hash_including(dry_run: true, file_prefix: prefix))
+                hash_including(dry_run: true, file_name_prefix: prefix))
                 .and_call_original
               expect(env).not_to receive(:run_local)
-              expect(oozie.run_job('valid_job', dry_run: true, file_prefix: prefix)).to match(prefix)
+              expect(oozie.run_job('valid_job', dry_run: true, file_name_prefix: prefix)).to match(prefix)
             end
           end
         end

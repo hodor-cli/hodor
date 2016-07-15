@@ -122,7 +122,7 @@ module Hodor::Oozie
               }
               fail "You must specify which job from jobs.yml to run" if !job
             end
-            jobs = jobs.symbolize_keys
+            jobs = jobs.normalize_keys
             if !jobs.has_key?(job.to_sym)
               caret = "^#{job.to_s}"
               fail "Job '#{job}' was not defined in jobs.yml" if !jobs.has_key?(caret.to_sym)
@@ -171,7 +171,7 @@ module Hodor::Oozie
       end
 
       def generate_and_write_job_file(file_name, in_file, job, options = {})
-        prefix = options[:file_prefix] || ''
+        prefix = options[:file_name_prefix] || ''
         out_file = append_prefix_to_filename(file_name, prefix)
         job_content = env.erb_load(in_file) || ''
         job_props = options.inject('') { |accumulator, kvp|
