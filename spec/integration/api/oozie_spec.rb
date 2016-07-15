@@ -231,10 +231,10 @@ module Hodor
 
               expect(oozie).to receive(:compose_job_file).once.with(
                 hash_including(name: 'valid_job'),
-                hash_including(dry_run: true, file_prefix: prefix))
+                hash_including(dry_run: true, file_name_prefix: prefix))
                 .and_call_original
               expect(env).not_to receive(:run_local)
-              expect(oozie.run_job('valid_job', dry_run: true, file_prefix: prefix)).to match(prefix)
+              expect(oozie.run_job('valid_job', dry_run: true, file_name_prefix: prefix)).to match(prefix)
             end
           end
         end

@@ -171,7 +171,7 @@ module Hodor::Oozie
       end
 
       def generate_and_write_job_file(file_name, in_file, job, options = {})
-        prefix = options[:file_prefix] || ''
+        prefix = options[:file_name_prefix] || ''
         out_file = append_prefix_to_filename(file_name, prefix)
         job_content = env.erb_load(in_file) || ''
         job_props = options.inject('') { |accumulator, kvp|
