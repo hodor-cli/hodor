@@ -42,6 +42,30 @@ module Hodor
       @logger
     end
 
+    # Events plugins can listen to
+
+    def register_listener(plugin)
+      @plugins << plugin
+    end
+
+    def command_pending(command, trailing)
+      @plugins.each { |plugin|
+        plugin.command_pending(command, trailing) if plugin.respond_to?(:command_pending)
+      }
+    end
+
+    def command_succeeded(command, trailing)
+      @plugins.each { |plugin|
+        plugin.command_succeeded(command, trailing) if plugin.respond_to?(:command_succeeded)
+      }
+    end
+
+    def command_failed(command, trailing, exception)
+      @plugins.each { |plugin|
+        plugin.command_failed(command, trailing, exception) if plugin.respond_to?(:command_failed)
+      }
+    end
+
     def terse?
       options[:terse]
     end
@@ -68,6 +92,7 @@ module Hodor
 
     def initialize
       @options = {}
+      @plugins = []
       # Logger fails if attempt is made to use it before it is loaded
       # so it is preloaded here.
       logger
@@ -122,7 +147,7 @@ module Hodor
     end
 
     def path_on_github(path = nil)
-      if path 
+      if path
         if path.start_with?('/')
           abspath = true
           lpath = path
@@ -156,7 +181,7 @@ module Hodor
     end
 
     def pwd(path = nil)
-      if path 
+      if path
         if path.start_with?('/')
           abspath = true
           lpwd = path
@@ -235,7 +260,7 @@ module Hodor
     # Compute SSH command (user, machine and port part)
     def ssh_addr
       va = "#{ssh_user}@#{settings[:ssh_host]}"
-      va << " -p #{settings[:ssh_port] || 22}" 
+      va << " -p #{settings[:ssh_port] || 22}"
     end
 
 
@@ -273,7 +298,7 @@ module Hodor
                 val = rtn[k]
               end
               val
-            else 
+            else
               match
             end
           end
@@ -410,8 +435,8 @@ module Hodor
           stdout_lines.sub!(/.*\n/) {
             command_output << $&
             if echo_command_output
-              if native_output_only 
-                puts $&.strip 
+              if native_output_only
+                puts $&.strip
               else
                 logger.stdout $&.strip
               end
@@ -421,8 +446,8 @@ module Hodor
           stderr_lines.sub!(/.*\n/) {
             command_output << $&
             if echo_command_output
-              if native_output_only 
-                puts $&.strip 
+              if native_output_only
+                puts $&.strip
               else
                 logger.stderr $&.strip
               end

@@ -104,8 +104,13 @@ module Hodor::Cli
 
     no_tasks do
       def thorfiles(*args)
-        Dir[File.join(File.dirname(__FILE__), '..', 'tasks/**/*.thor')]
+        plugins = []
+        Gem.find_latest_files('**/*.thor').each { |path|
+          plugins << path if path =~ /\/hodor-.*/
+        }
+        plugins + Dir[File.join(File.dirname(__FILE__), '..', 'tasks/**/*.thor')].map { |path| File.expand_path(path) }
       end
+
     end
 
   end
@@ -139,4 +144,3 @@ end
 
 require_relative "command"
 require_relative "ui/table"
-require_relative "api/oozie"

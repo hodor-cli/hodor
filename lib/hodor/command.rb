@@ -32,7 +32,9 @@ module Hodor
         workaround_thor_trailing_bug(trailing)
         erb_expand_command_line(trailing)
         @trailing = trailing
+        exception = nil
 
+        env.command_pending(command, trailing)
         if self.respond_to?(:intercept_dispatch)
           @was_intercepted = false
           intercept_dispatch(command.name.to_sym, trailing)
@@ -42,12 +44,22 @@ module Hodor
         end
       rescue Hodor::Cli::Usage => ex
         logger.error "CLI Usage: #{ex.message}"
+        exception = ex
       rescue SystemExit, Interrupt
       rescue => ex
         if env.prefs[:debug_mode]
           logger.error "EXCEPTION! #{ex.class.name} :: #{ex.message}\nBACKTRACE:\n\t#{ex.backtrace.join("\n\t")}"
         else
           logger.error "#{ex.message}\nException Class: '#{ex.class.name}'"
+        end
+        exception = ex
+      else
+        status = :pass
+      ensure
+        if exception
+          env.command_failed(command, trailing, exception)
+        else
+          env.command_succeeded(command, trailing)
         end
       end
 
@@ -57,7 +69,7 @@ module Hodor
       # just chops off the extra arguments that shouldn't be in the trailing string.
       def workaround_thor_trailing_bug(trailing)
         sentinel = false
-        trailing.select! { |element| 
+        trailing.select! { |element|
           sentinel = true if element.eql?("-EOLSTOP")
           !sentinel
         }
@@ -65,7 +77,7 @@ module Hodor
 
       # Expand any ERB variables on the command line against the loaded environment. If
       # the environment has no value for the specified key, leave the command line unchanged.
-      # 
+      #
       # Examples:
       #   $ bthor sandbox:oozie --oozie "<%= env[:oozie_url] %>"
       #   $ bthor sandbox:oozie --oozie :oozie_url
@@ -73,11 +85,11 @@ module Hodor
       # Note: Either of above works, since :oozie_url is gsub'd to <%= env[:oozie_url] %>
       #
       def erb_expand_command_line(trailing)
-        trailing.map! { |subarg| 
+        trailing.map! { |subarg|
           env.erb_sub(
             subarg.gsub(/(?<!\[):[a-zA-Z][_0-9a-zA-Z~]+/) { |match|
               if env.settings.has_key?(match[1..-1].to_sym)
-                "<%= env[#{match}] %>" 
+                "<%= env[#{match}] %>"
               else
                 match
               end
@@ -153,7 +165,7 @@ module Hodor
           constant = self.to_s.gsub(/^Thor::Sandbox::/, "")
           strip = $hodor_runner ? /^Hodor::Cli::/ : /(?<=Hodor::)Cli::/
           constant = constant.gsub(strip, "")
-          constant =  ::Thor::Util.snake_case(constant).squeeze(":")          
+          constant =  ::Thor::Util.snake_case(constant).squeeze(":")
           @namespace ||= constant
         else
           super

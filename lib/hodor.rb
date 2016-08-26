@@ -135,5 +135,3 @@ end
 
 require "hodor/environment"
 require "hodor/cli"
-require "hodor/api/oozie"
-require "hodor/api/hdfs"

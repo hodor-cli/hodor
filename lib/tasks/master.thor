@@ -36,6 +36,11 @@ module Hodor
         }
       end
 
+      desc "hello", "world"
+      def hello
+        puts "hello world"
+      end
+
       desc "secrets", "List all known secrets for the environment"
       def secrets
         env.secrets.each_pair { |k,v|
