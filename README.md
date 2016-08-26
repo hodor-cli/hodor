@@ -1,4 +1,8 @@
 
+# Hodor:
+#### __We'll be the brawn, you be the brains.__
+***
+
 Introduction
 ===============
 Hodor is a ruby-based framework, API and Command Line Interface that automates and simplifies the way you specify, deploy, debug and administer Hadoop and Oozie solutions. Why did we write Hodor? Because we recognized that the Hadoop ecosystem was missing something essential. While the creators of the Hadoop ecosystem have provided a cutting-edge data ingestion, storage, and transformation engine that performs well in production when provided a specific, fully debugged workflow, getting there is hard. Hadoop lacks a mature toolchain to manage a codebase with modern software development discipline. Enter Hodor: a combination of tools and conventions to address these shortcomings, by enabling in the Hadoop environment many of the software development practices, and deployment facilities we take for granted in normal software development.
@@ -18,7 +22,7 @@ $ hodor help oozie                      # Prints an overview of the Oozie namesp
 $ hodor help oozie:display_job          # Prints detailed information about the display_job command, arguments and options
 $ hodor oozie:topic drivers.yml         # Provides an overview of a key concept (drivers.yml) utilized by the namespace
 $ hodor master:topic clusters.yml       # Provides an overview of the clusters.yml file and its central role in Hodor
-$ hodor master:topic secrets            # Overview of how to configure environment to manage and store sensitive information safely 
+$ hodor master:topic secrets            # Overview of how to configure environment to manage and store sensitive information safely
 ```
 
 Hodor Setup and Aliasing
