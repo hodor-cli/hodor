@@ -1,6 +1,5 @@
 
-# Hodor:
-#### __We'll be the brawn, you be the brains.__
+# Hodor: #### __We'll be the brawn, you be the brains.__
 ***
 
 Introduction
