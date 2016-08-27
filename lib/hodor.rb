@@ -133,5 +133,5 @@ class String
   end
 end
 
-require "hodor/environment"
-require "hodor/cli"
+require_relative "hodor/environment"
+require_relative "hodor/cli"
