@@ -34,7 +34,43 @@ module Hodor
 
     def logger
       begin
-        ::Configurator.load_xml_file(File.join(root, 'config', 'log4r_config.xml'))
+        if File.exists?(File.join(root, 'config', 'log4r_config.xml'))
+          ::Configurator.load_xml_file(File.join(root, 'config', 'log4r_config.xml'))
+        else
+          ::Configurator.load_xml_string(%q[
+              <log4r_config>
+
+                <!-- Logging Levels -->
+                <pre_config>
+                  <custom_levels>DEBUG, INFO, SSHCMD, STDOUT, STDERR, WARN, ERROR, FATAL</custom_levels>
+                  <global level="DEBUG"/>
+                </pre_config>
+
+                <!-- Outputters -->
+                <outputter name="logconsole" type="StdoutOutputter" level="DEBUG" >
+                </outputter>
+
+                <outputter name="console" type="StdoutOutputter" level="DEBUG" >
+                  <formatter type="Log4r::PatternFormatter">
+                    <pattern>%5l|%M</pattern>
+                  </formatter>
+                </outputter>
+
+                <!-- Loggers -->
+                <logger name="MainLogger"
+                  level="INFO" additive="false" trace="true">
+                  <outputter>console</outputter>
+                </logger>
+
+                <!-- Rspec Loggers -->
+                <logger name="RspecLogger"
+                  level="WARN" additive="false" trace="true">
+                  <outputter>console</outputter>
+                </logger>
+
+              </log4r_config>
+          ])
+        end
         @logger = Log4r::Logger[logger_id]
       rescue => ex
         puts "Error:  #{ex.message}"
@@ -133,6 +169,7 @@ module Hodor
         preffile = "#{Etc.getpwuid.dir}/.hodor.yml"
         @prefs = yml_load(preffile) if File.exists?(preffile)
         @prefs ||= {}
+        @prefs = @prefs.normalize_keys
       end
       @prefs
     end
