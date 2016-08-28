@@ -1,5 +1,0 @@
-# api - Call Stack Signature:
-#	get_job_state()@lib/hodor/api/oozie/session.rb:45
-#	job_by_id()@lib/hodor/api/oozie.rb:34
-#	block (3 levels) in <module:Oozie>()@spec/integration/api/oozie/materialization_spec.rb:52
-{"errorMessage":null,"lastModifiedTime":"Sun, 25 Oct 2015 08:02:21 GMT","createdTime":"Sun, 25 Oct 2015 07:59:27 GMT","status":"SUCCEEDED","pushMissingDependencies":null,"externalStatus":null,"type":null,"nominalTime":"Sun, 25 Oct 2015 08:00:00 GMT","externalId":"0025060-151002103648730-oozie-oozi-W","id":"0023753-151002103648730-oozie-oozi-C@3","createdConf":null,"missingDependencies":"","runConf":null,"actionNumber":3,"errorCode":null,"trackerUri":null,"toString":"CoordinatorAction name[0023753-151002103648730-oozie-oozi-C@3] status[SUCCEEDED]","coordJobId":"0023753-151002103648730-oozie-oozi-C","consoleUrl":null}
