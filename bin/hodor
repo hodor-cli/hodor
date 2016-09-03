@@ -6,7 +6,36 @@ require_relative '../lib/hodor'
 $thor_runner = true
 $hodor_runner = true
 
+module Hodor
+  module Cli
+  end
+end
+
+class Object
+  def meta_def name, &blk
+    (class << self; self; end).instance_eval { define_method name, &blk }
+  end
+end
+
 begin
+  Thor::Util.meta_def('namespace_from_thor_class') { |constant|
+      constant = constant.to_s.gsub(/^Hodor::Cli::/, "")
+      constant = snake_case(constant).squeeze(":")
+      constant
+  }
+  Thor::Util.meta_def('load_thorfile') { |path, content = nil, debug = false|
+      content ||= File.binread(path)
+      begin
+        Hodor::Cli.class_eval(content, path)
+      rescue StandardError => e
+        $stderr.puts("WARNING: unable to load thorfile #{path.inspect}: #{e.message}")
+        if debug
+          $stderr.puts(*e.backtrace)
+        else
+          $stderr.puts(e.backtrace.first)
+        end
+      end
+  }
   Hodor::Cli::Runner.start(ARGV)
 rescue Hodor::Cli::CommandNotFound => ex
   namespace = ARGV.shift
