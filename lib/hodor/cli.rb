@@ -17,6 +17,8 @@ module Hodor::Cli
 
   class Runner < ::Thor::Runner
 
+    attr_reader :topic_paths
+
     def help(meth = nil)
       if meth && !self.respond_to?(meth)
         super
@@ -108,11 +110,25 @@ module Hodor::Cli
         Gem.find_latest_files('**/*.thor').each { |path|
           plugins << path if path =~ /\/hodor-.*/
         }
+
+        @topic_paths = plugins
+
+=begin
+        plugins.each_with_index { |plugin, index|
+          puts "PLUGIN #{index} : #{plugin}"
+        }
+=end
+
         plugins + Dir[File.join(File.dirname(__FILE__), '..', 'tasks/**/*.thor')].map { |path| File.expand_path(path) }
       end
 
     end
 
+  end
+end
+
+module Hodor
+  module Cli
   end
 end
 

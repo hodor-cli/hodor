@@ -162,11 +162,10 @@ module Hodor
       def namespace(name=nil)
         case name
         when nil
-          constant = self.to_s.gsub(/^Thor::Sandbox::/, "")
-          strip = $hodor_runner ? /^Hodor::Cli::/ : /(?<=Hodor::)Cli::/
-          constant = constant.gsub(strip, "")
+          parts = self.to_s.split("::")
+          constant = parts.last
           constant =  ::Thor::Util.snake_case(constant).squeeze(":")
-          @namespace ||= constant
+          @namspace ||= constant
         else
           super
         end
