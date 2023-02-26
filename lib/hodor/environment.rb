@@ -299,8 +299,19 @@ module Hodor
       va = "#{ssh_user}@#{settings[:ssh_host]}"
       va << " -p #{settings[:ssh_port] || 22}"
     end
-
-
+    
+    def yml_flatten(parent_key, val)
+      flat_vals = []
+      if val.is_a? Hash
+        val.each_pair { |k, v|
+          flat_vals += yml_flatten("#{parent_key}.#{k}", v)
+        }
+      elsif !parent_key.nil?
+        parent_key = parent_key[1..-1] if parent_key.start_with?('.')
+        flat_vals = ["#{parent_key} = #{val}"]
+      end
+      flat_vals
+    end
 
     # Run an ssh command, performing any optional variable expansion
     # on the command line that might be necessary.
