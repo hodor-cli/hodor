@@ -1,20 +1,20 @@
 require 'singleton'
 
-require 'yaml'
-require 'erb'
 require 'log4r'
 require 'log4r/configurator'
 require 'tmpdir'
 require 'open4'
 require 'socket'
 require 'etc'
+require_relative 'util/yml_tools'
+require_relative 'config_set'
 
 include Log4r
 
 module Hodor
   class Environment
     include Singleton
-
+    include Util::YmlTools
     attr_reader :logger
     attr_accessor :options
 
@@ -34,7 +34,43 @@ module Hodor
 
     def logger
       begin
-        ::Configurator.load_xml_file(File.join(root, 'config', 'log4r_config.xml'))
+        if File.exists?(File.join(root, 'config', 'log4r_config.xml'))
+          ::Configurator.load_xml_file(File.join(root, 'config', 'log4r_config.xml'))
+        else
+          ::Configurator.load_xml_string(%q[
+              <log4r_config>
+
+                <!-- Logging Levels -->
+                <pre_config>
+                  <custom_levels>DEBUG, INFO, SSHCMD, STDOUT, STDERR, WARN, ERROR, FATAL</custom_levels>
+                  <global level="DEBUG"/>
+                </pre_config>
+
+                <!-- Outputters -->
+                <outputter name="logconsole" type="StdoutOutputter" level="DEBUG" >
+                </outputter>
+
+                <outputter name="console" type="StdoutOutputter" level="DEBUG" >
+                  <formatter type="Log4r::PatternFormatter">
+                    <pattern>%5l|%M</pattern>
+                  </formatter>
+                </outputter>
+
+                <!-- Loggers -->
+                <logger name="MainLogger"
+                  level="INFO" additive="false" trace="true">
+                  <outputter>console</outputter>
+                </logger>
+
+                <!-- Rspec Loggers -->
+                <logger name="RspecLogger"
+                  level="WARN" additive="false" trace="true">
+                  <outputter>console</outputter>
+                </logger>
+
+              </log4r_config>
+          ])
+        end
         @logger = Log4r::Logger[logger_id]
       rescue => ex
         puts "Error:  #{ex.message}"
@@ -42,22 +78,28 @@ module Hodor
       @logger
     end
 
-    def erb_sub(erb_body)
-      ERB.new(erb_body).result(self.instance_eval { binding })
+    # Events plugins can listen to
+
+    def register_listener(plugin)
+      @plugins << plugin
     end
 
-    def erb_load(filename, suppress_erb=false)
-      if File.exists?(filename)
-        file_contents = File.read(filename)
-        sub_content = suppress_erb ? file_contents : erb_sub(file_contents)
-        sub_content
-      elsif !filename.start_with?(root)
-        erb_load(File.join(root, filename))
-      end
+    def command_pending(command, trailing)
+      @plugins.each { |plugin|
+        plugin.command_pending(command, trailing) if plugin.respond_to?(:command_pending)
+      }
     end
 
-    def yml_load(filename) #, suppress_erb=false)
-      YAML.load(erb_load(filename, false)) # suppress_erb))
+    def command_succeeded(command, trailing)
+      @plugins.each { |plugin|
+        plugin.command_succeeded(command, trailing) if plugin.respond_to?(:command_succeeded)
+      }
+    end
+
+    def command_failed(command, trailing, exception)
+      @plugins.each { |plugin|
+        plugin.command_failed(command, trailing, exception) if plugin.respond_to?(:command_failed)
+      }
     end
 
     def terse?
@@ -85,25 +127,40 @@ module Hodor
     end
 
     def initialize
-      @options = {} 
+      @options = {}
+      @plugins = []
+      # Logger fails if attempt is made to use it before it is loaded
+      # so it is preloaded here.
+      logger
+    end
+
+    def secrets
+      @secrets ||= Hodor::ConfigSet.new(:secrets).config_hash
+    end
+
+    def clear_secrets
+      @secrets = nil
     end
 
     def load_settings
-      target_env = hadoop_env.to_sym
-      @clusters = yml_load('config/clusters.yml')
+      unless @loaded
+        target_env = hadoop_env.to_sym
+        @clusters = yml_load('config/clusters.yml')
+        secrets
+        @clusters.recursive_merge!(@secrets) if @secrets
+        Hodor::ConfigSet.check_for_missing_configs(@clusters, :fail)
+        @target_cluster = @clusters[target_env]
+        if @target_cluster.nil?
+          raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+        end
 
-      @target_cluster = @clusters[target_env]
-      if @target_cluster.nil?
-        raise "The target environment '#{target_env}' was not defined in the config/clusters.yml file. Aborting..."
+        if File.exist?('config/local.yml')
+          @target_cluster.merge! yml_load('config/local.yml')
+        end
+
+        @target_cluster[:target] = target_env
+        @loaded = true
       end
-
-      if File.exist?('config/local.yml')
-        @target_cluster.merge! yml_load('config/local.yml')
-      end
-
-      @target_cluster[:target] = target_env
-
-      @loaded = true
       yml_expand(@target_cluster, [@clusters])
     end
 
@@ -112,6 +169,7 @@ module Hodor
         preffile = "#{Etc.getpwuid.dir}/.hodor.yml"
         @prefs = yml_load(preffile) if File.exists?(preffile)
         @prefs ||= {}
+        @prefs = @prefs.normalize_keys
       end
       @prefs
     end
@@ -126,7 +184,7 @@ module Hodor
     end
 
     def path_on_github(path = nil)
-      if path 
+      if path
         if path.start_with?('/')
           abspath = true
           lpath = path
@@ -160,7 +218,7 @@ module Hodor
     end
 
     def pwd(path = nil)
-      if path 
+      if path
         if path.start_with?('/')
           abspath = true
           lpwd = path
@@ -195,7 +253,7 @@ module Hodor
     end
 
     def target_cluster
-      load_settings if !@loaded || !@target_cluster
+      load_settings
       raise "No settings for target cluster '#{hadoop_env}' were loaded" if !@loaded || !@target_cluster
       @target_cluster
     end
@@ -239,38 +297,9 @@ module Hodor
     # Compute SSH command (user, machine and port part)
     def ssh_addr
       va = "#{ssh_user}@#{settings[:ssh_host]}"
-      va << " -p #{settings[:ssh_port] || 22}" 
+      va << " -p #{settings[:ssh_port] || 22}"
     end
-
-    def yml_expand(val, parents)
-      if val.is_a? String
-        val.gsub(/\$\{.+?\}/) { |match|
-          cv = match.split(/\${|}/)
-          expr = cv[1]
-          ups = expr.split('^')
-          parent_index = parents.length - ups.length
-          parent = parents[parent_index]
-          parent_key = ups[-1]
-          parent_key = parent_key[1..-1] if parent_key.start_with?(':')
-          if parent.has_key?(parent_key)
-            parent[parent_key]
-          elsif parent.has_key?(parent_key.to_sym)
-            parent[parent_key.to_sym]
-          else
-            parent_key
-          end
-        }
-      elsif val.is_a? Hash
-        more_parents = parents << val
-        val.each_pair do |k, v|
-          exp_val = yml_expand(v, more_parents)
-          val[k] = exp_val
-        end
-      else
-        val
-      end
-    end
-
+    
     def yml_flatten(parent_key, val)
       flat_vals = []
       if val.is_a? Hash
@@ -317,7 +346,7 @@ module Hodor
                 val = rtn[k]
               end
               val
-            else 
+            else
               match
             end
           end
@@ -454,8 +483,8 @@ module Hodor
           stdout_lines.sub!(/.*\n/) {
             command_output << $&
             if echo_command_output
-              if native_output_only 
-                puts $&.strip 
+              if native_output_only
+                puts $&.strip
               else
                 logger.stdout $&.strip
               end
@@ -465,8 +494,8 @@ module Hodor
           stderr_lines.sub!(/.*\n/) {
             command_output << $&
             if echo_command_output
-              if native_output_only 
-                puts $&.strip 
+              if native_output_only
+                puts $&.strip
               else
                 logger.stderr $&.strip
               end
@@ -477,6 +506,5 @@ module Hodor
       end
       command_output
     end
-
   end
 end

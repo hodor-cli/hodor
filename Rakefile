@@ -73,21 +73,12 @@ namespace :spec do
     RSpec::Core::RakeTask.new("spec:unit")  do |t|
       t.pattern = 'spec/unit/**/*_spec.rb'
       t.fail_on_error = false
-      t.rspec_opts = %w(--color --require spec_helper --format progress)
-    end
-  end
-
-  desc "Run integration tests"
-  task :integration => :depends do
-    RSpec::Core::RakeTask.new("spec:integration")  do |t|
-      t.pattern = 'spec/integration/**/*_spec.rb'
-      t.fail_on_error = false
-      t.rspec_opts = %w(--color --require spec_helper --format progress)
+      t.rspec_opts = %w(--color --require spec_helper --format d) #Use '--format progress' to restore previous functionality
     end
   end
 
   desc "Run all specs"
-  task :all => ['spec:unit', 'spec:integration']
+  task :all => ['spec:unit']
 end
 
 desc "Run spec on all test folders"

@@ -1,3 +1,0 @@
-[submodule "spec/test_repo"]
-	path = spec/test_repo
-	url = https://github.com/data-wranglers/hadoop-refrepo.git

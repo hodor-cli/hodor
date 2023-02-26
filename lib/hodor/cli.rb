@@ -1,30 +1,29 @@
 require "thor/runner"
-require_relative 'environment'
 
-module Hodor
+module Hodor::Cli
+  class Usage < StandardError
+  end
 
-  module Cli
-    class Usage < StandardError
+  class CommandNotFound < StandardError
+  end
+
+  class AbnormalExitStatus  < StandardError
+    attr_reader :exit_status
+    def initialize(exit_status, error_lines)
+      @exit_status = exit_status
+      super error_lines
     end
+  end
 
-    class CommandNotFound < StandardError
-    end
+  class Runner < ::Thor::Runner
 
-    class AbnormalExitStatus  < StandardError
-      attr_reader :exit_status
-      def initialize(exit_status, error_lines)
-        @exit_status = exit_status
-        super error_lines
-      end
-    end
+    attr_reader :topic_paths
 
-    class Runner < ::Thor::Runner
-
-      def help(meth = nil)
-        if meth && !self.respond_to?(meth)
-          super
-        else
-          overview = %Q[Hodor is an object-oriented scripting toolkit and Ruby-based API that automates and simplifies the way you
+    def help(meth = nil)
+      if meth && !self.respond_to?(meth)
+        super
+      else
+        overview = %Q[Hodor is an object-oriented scripting toolkit and Ruby-based API that automates and simplifies the way you
           specify, deploy, test, inspect and administer your hadoop cluster and Oozie workflows. Hodor commands follow
           the convention of:
 
@@ -41,15 +40,15 @@ module Hodor
           Note: examples shown in help pages don't show the 'bundle exec' prefix because they assume you have the following alias in place:
 
              $ alias hodor='bundle exec hodor'
-          ].unindent(10)
-          say overview
-        end
+        ].unindent(10)
+        say overview
       end
+    end
 
-      desc "list [SEARCH]", "List the available thor commands (--substring means .*SEARCH)"
-      method_options :substring => :boolean, :group => :string, :all => :boolean, :debug => :boolean
-      def list(search = "")
-        overview = %Q[
+    desc "list [SEARCH]", "List the available thor commands (--substring means .*SEARCH)"
+    method_options :substring => :boolean, :group => :string, :all => :boolean, :debug => :boolean
+    def list(search = "")
+      overview = %Q[
         Hodor's Namespaces & Commands
         ======================================================================================================
         Hodor divides its command set into the namespaces shown below (e.g. 'oozie', 'hdfs', 'master' etc.) Each
@@ -57,12 +56,12 @@ module Hodor
         hdfs namespace includes commands to list, put and get files to/from a remote HDFS volume. The following table shows
         all the namespaces Hodor supports, along with a short description of the commands that fall within each namespace.
 
-        ].unindent(8)
+      ].unindent(8)
 
-        say overview
-        super
+      say overview
+      super
 
-        more_help = %Q[Getting More Help:
+      more_help = %Q[Getting More Help:
         ------------------
         Each Hodor namespace offers full help, including an overview of the namespace itself, references to "topic
         pages" that explain core concepts implemented by the namespace and detailed help for each command that falls
@@ -85,33 +84,51 @@ module Hodor
         And to obtain a list of all topics available within the oozie namespace, for example, run:
 
           $ hodor oozie:topics
-        ].unindent(8)
-        say more_help
-      end
+      ].unindent(8)
+      say more_help
+    end
 
 
-      def method_missing(meth, *args)
-        if args[0].eql?('nocorrect')
-          fail %Q[You are using a shell alias with an improper trailing space. For example:
+    def method_missing(meth, *args)
+      if args[0].eql?('nocorrect')
+        fail %Q[You are using a shell alias with an improper trailing space. For example:
                      alias dj='bundle exec hodor oozie:display_job' (works)
                      alias dj='bundle exec hodor oozie:display_job ' (fails)]
-        end
-        super meth, *args
-      rescue
-        raise
       end
-
-      def self.handle_no_command_error(command, bv)
-        raise CommandNotFound.new("No Such Command: #{command.inspect}")
-      end
-
-      no_tasks do
-        def thorfiles(*args)
-          Dir[File.join(File.dirname(__FILE__), '..', 'tasks/**/*.thor')]
-        end
-      end
-  
+      super meth, *args
+    rescue
+      raise
     end
+
+    def self.handle_no_command_error(command, bv)
+      raise CommandNotFound.new("No Such Command: #{command.inspect}")
+    end
+
+    no_tasks do
+      def thorfiles(*args)
+        plugins = []
+        Gem.find_latest_files('**/*.thor').each { |path|
+          plugins << path if path =~ /\/hodor-.*/
+        }
+
+        @topic_paths = plugins
+
+=begin
+        plugins.each_with_index { |plugin, index|
+          puts "PLUGIN #{index} : #{plugin}"
+        }
+=end
+
+        plugins + Dir[File.join(File.dirname(__FILE__), '..', 'tasks/**/*.thor')].map { |path| File.expand_path(path) }
+      end
+
+    end
+
+  end
+end
+
+module Hodor
+  module Cli
   end
 end
 
@@ -143,4 +160,3 @@ end
 
 require_relative "command"
 require_relative "ui/table"
-require_relative "api/oozie"

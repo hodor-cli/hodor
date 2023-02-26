@@ -14,9 +14,6 @@ Bundler.setup
 require 'pry'
 require 'hodor'
 require 'wrong/adapters/rspec'
-require 'support/d_v_r'
-require 'support/hodor_api'
-require 'support/hodor_cli'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
@@ -87,13 +84,3 @@ def require_thor(task)
 end
 
 require 'hodor/ui/table'
-require "hodor/api/oozie/job"
-require "hodor/api/oozie/query"
-require "hodor/api/oozie/session"
-require "hodor/api/oozie/bundle"
-require "hodor/api/oozie/coordinator"
-require "hodor/api/oozie/materialization"
-require "hodor/api/oozie/workflow"
-require "hodor/api/oozie/action"
-require "hodor/api/oozie/hadoop_job"
-require 'hodor/api/oozie'

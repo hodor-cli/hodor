@@ -44,6 +44,42 @@ and to assure consistency of definitions.
        :hadoopBaseUrl: hadoop-stage.mycompany.com
        <<: *templates
 
+--- Handling sensitive information in the clusters.yml file ---
+Starting in Hodor 1.0.3 the information in the secrets configuration will be merged into the clusters configuration. In order
+to use this new feature reliably:
+1) Replace the sensitive property values the clusters.yml file with a string starting with #required and containing a description
+   of the property.  For example the YAML entry might look like:
+   some_password: "required for logging into some resource"
+   If the #required tag is not replaced during the process of generating environment settings an exception listing all
+   missing properties will be thrown.
+2) Add the value for the property to the secrets configuration.
+
+Here is a simple example:
+This would appear in the clusters.yml file:
+production:
+    db_name: target_db
+    db_user_name: "#required defined under production"
+    db_password: "#required defined under production"
+
+In config/secrets:
+production:
+    db_user_name: "#required defined under secrets/production"
+    db_password: "#required defined under secrets/production"
+
+In the secrets.yml file hat overrides the above secrets file
+production:
+    db_user_name: joe_db
+    db_password: XYZ12345Xx
+
+After environment settings are generated the configuration for production would be:
+{ production: { db_name: target_db, db_user_name: joe_db,  db_password: XYZ12345Xx } }
+
+
+
+
+
+
+
 
 The section (staging or production) that Hodor uses (e.g. the "target cluster") is configured using:
 
